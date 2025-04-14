@@ -1,7 +1,7 @@
 const User = require('../models/UserModel');
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
-const AppError = require('../utils/AppError');
+
 
 // Función para crear y enviar token
 const createSendToken = (user, statusCode, res) => {
@@ -35,7 +35,7 @@ exports.register = async (req, res, next) => {
     
     // Validación adicional
     if (role && !['user', 'admin', 'editor'].includes(role)) {
-      throw new AppError('Rol de usuario no válido', 400);
+      throw new Error('Rol de usuario no válido', 400);
     }
 
     const newUser = await User.create({
@@ -56,29 +56,56 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // 1) Verificar si el email y password existen
+    // 1. Verificar si se proporcionaron email y contraseña
     if (!email || !password) {
-      throw new AppError('Por favor proporcione email y contraseña', 400);
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Por favor proporcione email y contraseña',
+      });
     }
 
-    // 2) Verificar si el usuario existe y la contraseña es correcta
+    // 2. Verificar si el usuario existe
     const user = await User.findOne({ email }).select('+password');
-
-    if (!user || !(await user.comparePassword(password))) {
-      throw new AppError('Email o contraseña incorrectos', 401);
+    if (!user) {
+      return res.status(401).json({
+        status: 'fail',
+        message: `Correo o contraseña incorrectos`,
+      });
     }
 
-    // 3) Actualizar lastLogin
-    user.lastLogin = Date.now();
-    await user.save({ validateBeforeSave: false });
+    // 3. Comparar contraseñas directamente (sin encriptación)
+    if (user.password !== password) {
+      return res.status(401).json({
+        status: 'fail',
+        message: `Correo o contraseña incorrectos 2, ${user.password}`,
+      });
+    }
 
-    // 4) Enviar token al cliente
-    createSendToken(user, 200, res);
+    // 4. Crear token usando el método del modelo
+    const token = user.generateAuthToken();
+
+    // 5. Enviar respuesta exitosa
+    res.status(200).json({
+      status: 'success',
+      token,
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
   } catch (err) {
-    next(err);
+    console.error('Error en login:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error en el servidor',
+      error: err.message,
+    });
   }
 };
-
 // Middleware de protección
 exports.protect = async (req, res, next) => {
   try {
@@ -95,7 +122,7 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
-      throw new AppError('No está autorizado para acceder a esta ruta', 401);
+      throw new Error('No está autorizado para acceder a esta ruta', 401);
     }
 
     // 2) Verificar token
@@ -104,12 +131,12 @@ exports.protect = async (req, res, next) => {
     // 3) Verificar si el usuario aún existe
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
-      throw new AppError('El usuario perteneciente a este token ya no existe', 401);
+      throw new Error('El usuario perteneciente a este token ya no existe', 401);
     }
 
     // 4) Verificar si el usuario cambió la contraseña después de que se emitió el token
     if (currentUser.changedPasswordAfter(decoded.iat)) {
-      throw new AppError('El usuario cambió recientemente la contraseña. Por favor inicie sesión nuevamente', 401);
+      throw new Error('El usuario cambió recientemente la contraseña. Por favor inicie sesión nuevamente', 401);
     }
 
     // CONCEDE ACCESO A LA RUTA PROTEGIDA
@@ -124,7 +151,7 @@ exports.protect = async (req, res, next) => {
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      throw new AppError('No tiene permiso para realizar esta acción', 403);
+      throw new Error('No tiene permiso para realizar esta acción', 403);
     }
     next();
   };

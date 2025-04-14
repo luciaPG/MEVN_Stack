@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 const validator = require('validator');
+const jwt = require('jsonwebtoken'); // Importa jsonwebtoken
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -22,14 +22,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'La contraseña es obligatoria'],
-    select: false,
-    minlength: [8, 'La contraseña debe tener al menos 8 caracteres'],
-    validate: {
-      validator: function(value) {
-        return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/.test(value);
-      },
-      message: 'La contraseña debe contener al menos una mayúscula, una minúscula y un número'
-    }
+    select: false
   },
   role: {
     type: String,
@@ -54,24 +47,6 @@ const userSchema = new mongoose.Schema({
     }
   }
 });
-
-// Middleware para hash de contraseña
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Método para comparar contraseñas
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
 
 // Método para generar JWT
 userSchema.methods.generateAuthToken = function() {

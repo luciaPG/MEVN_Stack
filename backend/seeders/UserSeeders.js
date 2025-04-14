@@ -29,7 +29,6 @@ const seedUsers = async () => {
     const hashedUsers = await Promise.all(
       users.map(async user => ({
         ...user,
-        password: await bcrypt.hash(user.password, 12)
       }))
     );
 
