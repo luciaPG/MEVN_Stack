@@ -2,12 +2,76 @@ const User = require('../models/UserModel');
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
 
-// Login de usuario - simplificado
+exports.register = async (req, res, next) => {
+  try {
+    const { username, email, password, passwordConfirm } = req.body;
+
+    // Validaciones básicas
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Por favor proporcione nombre de usuario, email y contraseña',
+      });
+    }
+
+    if (password !== passwordConfirm) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Las contraseñas no coinciden',
+      });
+    }
+
+    // Verificar si el usuario ya existe
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Este correo ya está registrado',
+      });
+    }
+
+    // Crear nuevo usuario
+    const newUser = await User.create({
+      username,
+      email,
+      password,
+      role: 'user', // Rol predeterminado
+    });
+
+    // Generar token
+    const token = jwt.sign(
+      { id: newUser._id, role: newUser.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+    );
+
+    // Enviar respuesta
+    res.status(201).json({
+      status: 'success',
+      token,
+      data: {
+        user: {
+          id: newUser._id,
+          username: newUser.username,
+          email: newUser.email,
+          role: newUser.role,
+        },
+      },
+    });
+  } catch (err) {
+    console.error('Error en registro:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error en el servidor',
+      error: err.message,
+    });
+  }
+};
+
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Verificar si se proporcionaron email y contraseña
     if (!email || !password) {
       return res.status(400).json({
         status: 'fail',
@@ -15,7 +79,6 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // 2. Verificar si el usuario existe
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
       return res.status(401).json({
@@ -24,7 +87,6 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // 3. Comparar contraseñas directamente (sin encriptación)
     if (user.password !== password) {
       return res.status(401).json({
         status: 'fail',
@@ -32,21 +94,19 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // 4. Crear token usando el método del modelo
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
     );
 
-    // 5. Enviar respuesta exitosa
     res.status(200).json({
       status: 'success',
       token,
       data: {
         user: {
           id: user._id,
-          username: user.username, // Cambiado de name a username
+          username: user.username,
           email: user.email,
           role: user.role,
         },
@@ -62,7 +122,6 @@ exports.login = async (req, res, next) => {
   }
 };
 
-// Middleware de protección simplificado
 exports.protect = async (req, res, next) => {
   try {
     let token;
