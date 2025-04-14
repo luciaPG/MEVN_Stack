@@ -1,28 +1,37 @@
-<!-- filepath: d:\ETSII\4 CARRERA\2C\CBD\MEVN_Stack\MEVN_Stack\frontend\src\App.vue -->
 <template>
   <div id="app">
-    <nav>
-      <router-link to="/">Home</router-link> |
-      <router-link v-if="!isAuthenticated" to="/login">Login</router-link>
-      <router-link v-if="isAuthenticated" to="/dashboard"
-        >Dashboard</router-link
-      >
-      |
-      <button v-if="isAuthenticated" @click="handleLogout">Logout</button>
-    </nav>
-    <router-view />
+    <!-- Reemplazar la navegación existente por el componente NavBar -->
+    <NavBar />
+
+    <!-- Contenedor principal con margen superior para evitar que el contenido quede bajo la navbar fija -->
+    <div class="content-container">
+      <router-view />
+    </div>
   </div>
 </template>
 
 <script>
-import { useAuth } from "./store/AuthContext";
+import { inject, computed } from "vue";
+import NavBar from "./components/NavBar.vue"; // Importar el componente NavBar
+import { provideAuth } from "./store/AuthContext"; // Importar provideAuth si es necesario
 
 export default {
+  components: {
+    NavBar, // Registrar el componente
+  },
   setup() {
-    const { isAuthenticated, logout } = useAuth();
+    // Proporcionar el contexto de autenticación
+    provideAuth(); // Asegúrate de que esta función esté definida en AuthContext.js
+
+    // Mantener la lógica existente para la compatibilidad
+    const auth = inject("auth");
+
+    const isAuthenticated = computed(() => {
+      return !!localStorage.getItem("jwt");
+    });
 
     const handleLogout = () => {
-      logout();
+      auth.logout();
     };
 
     return {
@@ -42,10 +51,12 @@ export default {
   color: #2c3e50;
 }
 
-nav {
-  padding: 30px;
+/* Añadir margen superior para el contenido principal */
+.content-container {
+  padding-top: 80px; /* Ajusta este valor según la altura de tu NavBar */
 }
 
+/* Puedes mantener estos estilos para otras áreas que no sean la navegación principal */
 nav a {
   font-weight: bold;
   color: #2c3e50;
