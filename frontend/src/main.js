@@ -1,11 +1,14 @@
-import { createApp } from 'vue';
-import App from './App.vue';
-import axios from 'axios';
+import { createApp, h } from "vue"; // Importa 'h'
+import App from "./App.vue";
+import router from "./router";
+import { provideAuth } from "./store/AuthContext";
 
-const app = createApp(App);
+const app = createApp({
+  setup() {
+    provideAuth(); // Proveer el contexto de autenticación
+  },
+  render: () => h(App), // Usa 'h' para renderizar el componente raíz
+});
 
-// Configurar Axios
-axios.defaults.baseURL = 'http://localhost:5000';
-app.config.globalProperties.$axios = axios;
-
-app.mount('#app');
+app.use(router);
+app.mount("#app");
