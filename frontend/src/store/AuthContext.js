@@ -10,7 +10,10 @@ const authState = reactive({
 // Función para iniciar sesión
 const login = async (credentials) => {
   try {
-    const response = await axios.post("/api/auth/login", credentials);
+    const response = await axios.post(
+      "http://localhost:5000/login",
+      credentials
+    );
     authState.user = response.data.user;
     authState.isAuthenticated = true;
     localStorage.setItem("token", response.data.token);
