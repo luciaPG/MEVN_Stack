@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const jwt = require('jsonwebtoken'); // Importa jsonwebtoken
+const jwt = require('jsonwebtoken'); 
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Método para generar JWT
+
 userSchema.methods.generateAuthToken = function() {
   return jwt.sign(
     { id: this._id, role: this.role },

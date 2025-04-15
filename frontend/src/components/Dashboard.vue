@@ -7,6 +7,6 @@
 
 <script>
 export default {
-  name: "DashboardView", // Cambia el nombre a algo más descriptivo
+  name: "DashboardView", 
 };
 </script>

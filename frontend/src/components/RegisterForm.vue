@@ -6,7 +6,6 @@
         <p>Regístrate para comenzar a usar la plataforma</p>
       </div>
       <form @submit.prevent="handleRegister" class="register-form">
-        <!-- Campo de Nombre de Usuario -->
         <div class="form-group">
           <label for="username">Nombre de Usuario</label>
           <div class="input-with-icon">
@@ -25,7 +24,6 @@
             {{ validationErrors.username }}
           </div>
         </div>
-        <!-- Campo de Email -->
         <div class="form-group">
           <label for="email">Email</label>
           <div class="input-with-icon">
@@ -43,7 +41,6 @@
             {{ validationErrors.email }}
           </div>
         </div>
-        <!-- Campo de Contraseña -->
         <div class="form-group">
           <label for="password">Contraseña</label>
           <div class="input-with-icon">
@@ -69,7 +66,6 @@
             {{ validationErrors.password }}
           </div>
         </div>
-        <!-- Campo de Confirmar Contraseña -->
         <div class="form-group">
           <label for="confirmPassword">Confirmar Contraseña</label>
           <div class="input-with-icon">
@@ -96,19 +92,16 @@
             {{ validationErrors.confirmPassword }}
           </div>
         </div>
-        <!-- Botón de registro -->
         <div class="form-group">
           <button type="submit" class="register-btn" :disabled="isLoading">
             <span v-if="isLoading" class="spinner"></span>
             <span v-else>Crear Cuenta</span>
           </button>
         </div>
-        <!-- Mensaje de error -->
         <div v-if="error" class="error-message">
           <i class="fas fa-exclamation-circle"></i>
           {{ error }}
         </div>
-        <!-- Enlace a Login -->
         <div class="register-footer">
           ¿Ya tienes una cuenta?
           <router-link to="/login" class="login-link"
@@ -144,27 +137,24 @@ const validationErrors = reactive({
 
 const validateForm = () => {
   let isValid = true;
-  // Limpiar errores anteriores
   validationErrors.username = "";
   validationErrors.email = "";
   validationErrors.password = "";
   validationErrors.confirmPassword = "";
 
-  // Validación del nombre de usuario
   if (username.value.length < 3) {
     validationErrors.username =
       "El nombre de usuario debe tener al menos 3 caracteres";
     isValid = false;
   }
 
-  // Validación del email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email.value)) {
     validationErrors.email = "Por favor, ingresa un email válido";
     isValid = false;
   }
 
-  // Validación de confirmación de contraseña
+
   if (password.value !== confirmPassword.value) {
     validationErrors.confirmPassword = "Las contraseñas no coinciden";
     isValid = false;
@@ -176,7 +166,7 @@ const validateForm = () => {
 const handleRegister = async () => {
   if (isLoading.value) return;
 
-  // Validar el formulario
+
   if (!validateForm()) return;
 
   error.value = "";
@@ -192,10 +182,9 @@ const handleRegister = async () => {
       }
     );
 
-    // Guardar el token en localStorage
     localStorage.setItem("jwt", response.data.token);
 
-    // Redirigir al usuario al dashboard tras el registro exitoso
+ 
     router.push("/dashboard");
   } catch (err) {
     error.value = err.response?.data?.message || "Error al crear la cuenta";
@@ -206,7 +195,7 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-/* Estilos generales */
+
 .register-container {
   display: flex;
   justify-content: center;
@@ -303,6 +292,7 @@ const handleRegister = async () => {
   border: none;
   border-radius: 8px;
   padding: 12px;
+  width: 105%;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -350,7 +340,7 @@ const handleRegister = async () => {
 
 .register-footer {
   margin-top: 1.5rem;
-  text-align: center;
+  text-align: left;
   font-size: 0.9rem;
   color: #64748b;
 }
@@ -365,7 +355,7 @@ const handleRegister = async () => {
   text-decoration: underline;
 }
 
-/* Media queries */
+
 @media (max-width: 480px) {
   .register-card {
     padding: 1.5rem;

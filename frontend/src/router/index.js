@@ -1,8 +1,8 @@
-// src/router/index.js
+
 import { createRouter, createWebHistory } from "vue-router";
 import Login from "../components/LoginForm.vue";
 import Dashboard from "../components/Dashboard.vue";
-import Home from "../components/Home.vue"; // Asegúrate de tener un componente Home
+import Home from "../components/Home.vue"; 
 import Register from "@/views/Register.vue";
 import { authGuard } from "./authGuard";
 

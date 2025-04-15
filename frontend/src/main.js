@@ -3,7 +3,7 @@ import App from "./App.vue";
 import router from "./router";
 import axios from "axios";
 
-// Configuración de Axios para JWT
+
 axios.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("jwt");
@@ -15,10 +15,8 @@ axios.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Configuración global de la aplicación
 const app = createApp(App);
 
-// Proveedor de autenticación mejorado
 app.provide("auth", {
   authState: {
     isAuthenticated: () => !!localStorage.getItem("jwt"),

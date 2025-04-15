@@ -1,9 +1,9 @@
 <template>
   <div id="app">
-    <!-- Reemplazar la navegación existente por el componente NavBar -->
+   
     <NavBar />
 
-    <!-- Contenedor principal con margen superior para evitar que el contenido quede bajo la navbar fija -->
+    
     <div class="content-container">
       <router-view />
     </div>
@@ -12,18 +12,18 @@
 
 <script>
 import { inject, computed } from "vue";
-import NavBar from "./components/NavBar.vue"; // Importar el componente NavBar
-import { provideAuth } from "./store/AuthContext"; // Importar provideAuth si es necesario
+import NavBar from "./components/NavBar.vue"
+import { provideAuth } from "./store/AuthContext"; 
 
 export default {
   components: {
-    NavBar, // Registrar el componente
+    NavBar, 
   },
   setup() {
-    // Proporcionar el contexto de autenticación
-    provideAuth(); // Asegúrate de que esta función esté definida en AuthContext.js
+    
+    provideAuth(); 
 
-    // Mantener la lógica existente para la compatibilidad
+  
     const auth = inject("auth");
 
     const isAuthenticated = computed(() => {
@@ -51,12 +51,12 @@ export default {
   color: #2c3e50;
 }
 
-/* Añadir margen superior para el contenido principal */
+
 .content-container {
-  padding-top: 80px; /* Ajusta este valor según la altura de tu NavBar */
+  padding-top: 80px; 
 }
 
-/* Puedes mantener estos estilos para otras áreas que no sean la navegación principal */
+
 nav a {
   font-weight: bold;
   color: #2c3e50;

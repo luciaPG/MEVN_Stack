@@ -6,7 +6,7 @@ exports.register = async (req, res, next) => {
   try {
     const { username, email, password, passwordConfirm } = req.body;
 
-    // Validaciones básicas
+
     if (!username || !email || !password) {
       return res.status(400).json({
         status: 'fail',
@@ -21,7 +21,7 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    // Verificar si el usuario ya existe
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -30,22 +30,21 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    // Crear nuevo usuario
+
     const newUser = await User.create({
       username,
       email,
       password,
-      role: 'user', // Rol predeterminado
+      role: 'user', 
     });
 
-    // Generar token
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
     );
 
-    // Enviar respuesta
+
     res.status(201).json({
       status: 'success',
       token,

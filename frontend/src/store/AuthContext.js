@@ -1,13 +1,13 @@
 import { reactive, provide, inject } from "vue";
 import axios from "axios";
 
-// Estado reactivo para la autenticación
+
 const authState = reactive({
   user: null,
   isAuthenticated: localStorage.getItem("jwt") ? true : false,
 });
 
-// Función para iniciar sesión
+
 const login = async (credentials) => {
   try {
     const response = await axios.post(
@@ -22,14 +22,14 @@ const login = async (credentials) => {
   }
 };
 
-// Función para cerrar sesión
+
 const logout = () => {
   authState.user = null;
   authState.isAuthenticated = false;
   localStorage.removeItem("jwt");
 };
 
-// Proveer el contexto
+
 export const provideAuth = () => {
   provide("auth", {
     authState,
@@ -38,7 +38,7 @@ export const provideAuth = () => {
   });
 };
 
-// Usar el contexto
+
 export const useAuth = () => {
   const auth = inject("auth");
   if (!auth) {
