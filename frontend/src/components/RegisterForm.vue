@@ -154,7 +154,6 @@ const validateForm = () => {
     isValid = false;
   }
 
-
   if (password.value !== confirmPassword.value) {
     validationErrors.confirmPassword = "Las contraseñas no coinciden";
     isValid = false;
@@ -165,7 +164,6 @@ const validateForm = () => {
 
 const handleRegister = async () => {
   if (isLoading.value) return;
-
 
   if (!validateForm()) return;
 
@@ -184,7 +182,6 @@ const handleRegister = async () => {
 
     localStorage.setItem("jwt", response.data.token);
 
- 
     router.push("/dashboard");
   } catch (err) {
     error.value = err.response?.data?.message || "Error al crear la cuenta";
@@ -195,7 +192,6 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-
 .register-container {
   display: flex;
   justify-content: center;
@@ -354,7 +350,6 @@ const handleRegister = async () => {
 .login-link:hover {
   text-decoration: underline;
 }
-
 
 @media (max-width: 480px) {
   .register-card {

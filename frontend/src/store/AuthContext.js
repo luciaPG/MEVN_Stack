@@ -1,12 +1,10 @@
 import { reactive, provide, inject } from "vue";
 import axios from "axios";
 
-
 const authState = reactive({
   user: null,
   isAuthenticated: localStorage.getItem("jwt") ? true : false,
 });
-
 
 const login = async (credentials) => {
   try {
@@ -22,13 +20,11 @@ const login = async (credentials) => {
   }
 };
 
-
 const logout = () => {
   authState.user = null;
   authState.isAuthenticated = false;
   localStorage.removeItem("jwt");
 };
-
 
 export const provideAuth = () => {
   provide("auth", {
@@ -37,7 +33,6 @@ export const provideAuth = () => {
     logout,
   });
 };
-
 
 export const useAuth = () => {
   const auth = inject("auth");

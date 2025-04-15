@@ -1,9 +1,7 @@
 <template>
   <div id="app">
-   
     <NavBar />
 
-    
     <div class="content-container">
       <router-view />
     </div>
@@ -12,18 +10,16 @@
 
 <script>
 import { inject, computed } from "vue";
-import NavBar from "./components/NavBar.vue"
-import { provideAuth } from "./store/AuthContext"; 
+import NavBar from "./components/NavBar.vue";
+import { provideAuth } from "./store/AuthContext";
 
 export default {
   components: {
-    NavBar, 
+    NavBar,
   },
   setup() {
-    
-    provideAuth(); 
+    provideAuth();
 
-  
     const auth = inject("auth");
 
     const isAuthenticated = computed(() => {
@@ -51,11 +47,9 @@ export default {
   color: #2c3e50;
 }
 
-
 .content-container {
-  padding-top: 80px; 
+  padding-top: 80px;
 }
-
 
 nav a {
   font-weight: bold;
