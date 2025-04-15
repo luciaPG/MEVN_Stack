@@ -1,35 +1,31 @@
 import { reactive, provide, inject } from "vue";
 import axios from "axios";
 
-// Estado reactivo para la autenticación
 const authState = reactive({
   user: null,
-  isAuthenticated: false,
+  isAuthenticated: localStorage.getItem("jwt") ? true : false,
 });
 
-// Función para iniciar sesión
 const login = async (credentials) => {
   try {
     const response = await axios.post(
-      "http://localhost:5000/login",
+      "http://localhost:5000/api/auth/login",
       credentials
     );
-    authState.user = response.data.user;
+    authState.user = response.data.data.user;
     authState.isAuthenticated = true;
-    localStorage.setItem("token", response.data.token);
+    localStorage.setItem("jwt", response.data.token);
   } catch (error) {
     throw error.response?.data?.message || "Error al iniciar sesión";
   }
 };
 
-// Función para cerrar sesión
 const logout = () => {
   authState.user = null;
   authState.isAuthenticated = false;
-  localStorage.removeItem("token");
+  localStorage.removeItem("jwt");
 };
 
-// Proveer el contexto
 export const provideAuth = () => {
   provide("auth", {
     authState,
@@ -38,7 +34,6 @@ export const provideAuth = () => {
   });
 };
 
-// Usar el contexto
 export const useAuth = () => {
   const auth = inject("auth");
   if (!auth) {

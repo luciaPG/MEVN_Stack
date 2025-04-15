@@ -1,28 +1,33 @@
-<!-- filepath: d:\ETSII\4 CARRERA\2C\CBD\MEVN_Stack\MEVN_Stack\frontend\src\App.vue -->
 <template>
   <div id="app">
-    <nav>
-      <router-link to="/">Home</router-link> |
-      <router-link v-if="!isAuthenticated" to="/login">Login</router-link>
-      <router-link v-if="isAuthenticated" to="/dashboard"
-        >Dashboard</router-link
-      >
-      |
-      <button v-if="isAuthenticated" @click="handleLogout">Logout</button>
-    </nav>
-    <router-view />
+    <NavBar />
+
+    <div class="content-container">
+      <router-view />
+    </div>
   </div>
 </template>
 
 <script>
-import { useAuth } from "./store/AuthContext";
+import { inject, computed } from "vue";
+import NavBar from "./components/NavBar.vue";
+import { provideAuth } from "./store/AuthContext";
 
 export default {
+  components: {
+    NavBar,
+  },
   setup() {
-    const { isAuthenticated, logout } = useAuth();
+    provideAuth();
+
+    const auth = inject("auth");
+
+    const isAuthenticated = computed(() => {
+      return !!localStorage.getItem("jwt");
+    });
 
     const handleLogout = () => {
-      logout();
+      auth.logout();
     };
 
     return {
@@ -42,8 +47,8 @@ export default {
   color: #2c3e50;
 }
 
-nav {
-  padding: 30px;
+.content-container {
+  padding-top: 80px;
 }
 
 nav a {

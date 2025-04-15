@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/AuthController');
 
-// Rutas públicas
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 
