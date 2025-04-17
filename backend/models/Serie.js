@@ -16,11 +16,6 @@ const serieSchema = new mongoose.Schema({
     required: [true, "El género es obligatorio"],
     trim: true,
   },
-  temporada: {
-    type: Number,
-    ref: "Temporada",
-    required: [true, "La temporada es obligatoria"],
-  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Serie', serieSchema);
