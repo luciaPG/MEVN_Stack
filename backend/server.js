@@ -5,8 +5,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
-const SerieRoutes = require('./routes/SerieRoutes');
 const authRoutes = require('./routes/UserRoutes');
+const SerieRoutes = require('./routes/SerieRoutes');
+const TemporadaRoutes = require('./routes/TemporadaRoutes');
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/series', SerieRoutes);
+app.use('/api/temporadas', TemporadaRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
