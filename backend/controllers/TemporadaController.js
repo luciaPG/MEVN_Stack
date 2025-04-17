@@ -1,5 +1,6 @@
 const Temporada = require('../models/Temporada');
 const Serie = require('../models/Serie');
+const Episodio = require('../models/Episodio');
 
 // CREATE
 const createTemporada = async (req, res) => {
@@ -62,7 +63,8 @@ const deleteTemporada = async (req, res) => {
         if (!deletedTemporada) {
             return res.status(404).json({ message: "Temporada no encontrada" });
         }
-        res.status(200).json({ message: "Temporada eliminada" });
+        await Episodio.deleteMany({ temporada: req.params.id });
+        res.status(200).json({ message: "Temporada eliminada junto a sus episodios" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar la temporada" });
     }

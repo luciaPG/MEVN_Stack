@@ -58,7 +58,9 @@ const deleteSerie = async (req, res) => {
         if (!deletedSerie) {
             return res.status(404).json({ message: "Serie no encontrada" });
         }
-        res.status(200).json({ message: "Serie eliminada" });
+        await Temporada.deleteMany({ serie: req.params.id });
+        await Episodio.deleteMany({ temporada: { $in: deletedSerie.temporadas } });
+        res.status(200).json({ message: "Serie eliminada junto a sus temporadas y episodios" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar la serie" });
     }
