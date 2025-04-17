@@ -5,6 +5,10 @@ const Episodio = require('../models/Episodio');
 // CREATE
 const createTemporada = async (req, res) => {
     try {
+        const existingTemporada = await Temporada.findOne({ serie: req.body.serie, numeroTemporada: req.body.numeroTemporada });
+        if (existingTemporada) {
+            return res.status(400).json({ message: "Ya existe una temporada con ese número para esta serie" });
+        }
         const serieExistente = await Serie.findById(req.body.serie);
         if (!serieExistente) {
             return res.status(404).json({ message: "Serie no encontrada" });

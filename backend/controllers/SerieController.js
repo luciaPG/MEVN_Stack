@@ -3,6 +3,10 @@ const Serie = require("../models/Serie");
 // CREATE
 const createSerie = async (req, res) => {
     try{
+        const existingSerie = await Serie.findOne({ nombre: req.body.nombre });
+        if (existingSerie) {
+            return res.status(400).json({ message: "La serie ya existe" });
+        }
         const nuevaSerie = new Serie(req.body);
         await nuevaSerie.save();
         res.status(201).json(nuevaSerie);
