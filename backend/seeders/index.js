@@ -5,7 +5,7 @@ const seedSeries = require('./SerieSeeders');
 const seedTemporadas = require('./TemporadaSeeders');
 const seedEpisodios = require('./EpisodioSeeders');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/MVN_stack';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/nombre_db';
 
 const runSeeders = async () => {
   try {
