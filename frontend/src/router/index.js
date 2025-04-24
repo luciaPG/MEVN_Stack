@@ -10,6 +10,7 @@ import CrearSerieView from "@/views/CrearSerieView.vue";
 import CrearTemporadaView from "@/views/CrearTemporadaView.vue";
 import CrearEpisodioView from "@/views/CrearEpisodioView.vue";
 import EditarSerieView from "@/views/EditarSerieView.vue";
+import EditarTemporadaView from "@/views/EditarTemporadaView.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -30,6 +31,7 @@ const routes = [
     component: CrearEpisodioView,
   },
   { path: "/series/:id/editar", component: EditarSerieView },
+  { path: "/temporadas/:id/editar", component: EditarTemporadaView },
 ];
 
 const router = createRouter({
