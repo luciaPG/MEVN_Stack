@@ -6,7 +6,9 @@
   "scripts": {
     "start:backend": " cd backend && node server.js",
     "start:frontend": " cd frontend && npm run serve",
-    "seed:backend": " cd backend && node seeders/index.js"
+    "seed:backend": " cd backend && node seeders/index.js",
+    "install:all": "npm install && cd frontend && npm install && cd ..",
+    "lint": " cd frontend && npm run lint -- --fix && cd .."
   },
   "keywords": [],
   "author": "",

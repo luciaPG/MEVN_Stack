@@ -35,7 +35,12 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: {
     type: Date
-  }
+  },
+  // Añadir campo para series registradas
+  registeredSeries: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Serie'
+  }]
 }, { 
   timestamps: true,
   toJSON: { 
@@ -48,6 +53,12 @@ const userSchema = new mongoose.Schema({
   }
 });
 
+// Añadir una consulta virtual para obtener progreso
+userSchema.virtual('progreso', {
+  ref: 'Progreso',
+  localField: '_id',
+  foreignField: 'usuario'
+});
 
 userSchema.methods.generateAuthToken = function() {
   return jwt.sign(

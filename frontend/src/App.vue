@@ -1,40 +1,23 @@
 <template>
   <div id="app">
-    <NavBar />
-
-    <div class="content-container">
-      <router-view />
-    </div>
+    <nav-bar></nav-bar>
+    <router-view />
   </div>
 </template>
 
 <script>
-import { inject, computed } from "vue";
-import NavBar from "./components/NavBar.vue";
-import { provideAuth } from "./store/AuthContext";
+import { provideAuth } from './store/AuthContext';
+import NavBar from './components/NavBar.vue';
 
 export default {
+  name: 'App',
   components: {
-    NavBar,
+    NavBar
   },
   setup() {
+    // Provide auth context to all components
     provideAuth();
-
-    const auth = inject("auth");
-
-    const isAuthenticated = computed(() => {
-      return !!localStorage.getItem("jwt");
-    });
-
-    const handleLogout = () => {
-      auth.logout();
-    };
-
-    return {
-      isAuthenticated,
-      handleLogout,
-    };
-  },
+  }
 };
 </script>
 
