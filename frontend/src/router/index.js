@@ -22,7 +22,7 @@ const routes = [
   },
   { path: "/series", component: SeriesView },
   { path: "/detalles/:id", component: DetallesView },
-  { path: "/series/crear", component: CrearSerieView },
+  { path: "/series/nueva", component: CrearSerieView },
   { path: "/series/:id/temporadas/nueva", component: CrearTemporadaView },
   {
     path: "/series/:id/temporadas/:idTemporada/episodios/nuevo",

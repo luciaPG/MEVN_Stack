@@ -2,9 +2,6 @@
   <div class="crear-serie-view">
     <div class="header">
       <h1>Crear Nueva Serie</h1>
-      <router-link to="/series" class="back-link">
-        ← Volver al listado
-      </router-link>
     </div>
 
     <form @submit.prevent="handleSubmit" class="serie-form">
@@ -81,7 +78,7 @@ const handleSubmit = async () => {
       sinopsis: serie.value.sinopsis.trim(),
     });
 
-    router.push(`/series/${response.data._id}`);
+    router.push(`/detalles/${response.data._id}`);
   } catch (error) {
     console.error("Error al crear la serie:", error);
     alert("Ocurrió un error al crear la serie. Por favor intenta nuevamente.");
