@@ -80,11 +80,7 @@ const toggleVisto = () => {
 };
 
 const eliminarEpisodio = () => {
-  if (
-    confirm(
-      `¿Estás seguro de que quieres eliminar el episodio "${props.nombre}"?`
-    )
-  ) {
+  {
     emit("eliminar", props.id);
   }
 };
