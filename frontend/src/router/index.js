@@ -25,7 +25,7 @@ const routes = [
   { path: "/series/nueva", component: CrearSerieView },
   { path: "/series/:id/temporadas/nueva", component: CrearTemporadaView },
   {
-    path: "/series/:id/temporadas/:idTemporada/episodios/nuevo",
+    path: "/temporadas/:id/episodios/nuevo",
     component: CrearEpisodioView,
   },
 ];

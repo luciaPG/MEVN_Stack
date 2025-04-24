@@ -81,7 +81,7 @@
 
           <div class="add-episodio-container">
             <router-link
-              :to="`/series/:id/temporadas/${temporada._id}/episodios/nuevo`"
+              :to="`/temporadas/${temporada._id}/episodios/nuevo`"
               class="add-episodio-btn"
             >
               + Añadir Episodio
