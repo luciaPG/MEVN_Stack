@@ -27,7 +27,7 @@ const verDetalles = () => {
 
 <style scoped>
 .serie-card {
-  background: #fcf3e4;
+  background: #f3f4f6;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
