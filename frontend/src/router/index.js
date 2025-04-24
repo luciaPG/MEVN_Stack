@@ -11,6 +11,7 @@ import CrearTemporadaView from "@/views/CrearTemporadaView.vue";
 import CrearEpisodioView from "@/views/CrearEpisodioView.vue";
 import EditarSerieView from "@/views/EditarSerieView.vue";
 import EditarTemporadaView from "@/views/EditarTemporadaView.vue";
+import EditarTemporadaView from "@/views/EditarTemporadaView.vue";
 import EditarEpisodioView from "@/views/EditarEpisodioView.vue";
 
 const routes = [
@@ -32,6 +33,7 @@ const routes = [
     component: CrearEpisodioView,
   },
   { path: "/series/:id/editar", component: EditarSerieView },
+  { path: "/temporadas/:id/editar", component: EditarTemporadaView },
   { path: "/temporadas/:id/editar", component: EditarTemporadaView },
   { path: "/episodios/:id/editar", component: EditarEpisodioView },
 ];
