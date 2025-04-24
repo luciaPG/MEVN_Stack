@@ -1,60 +1,64 @@
-const Temporada = require('../models/Temporada');
+const mongoose = require('mongoose');
 const Serie = require('../models/Serie');
+const Temporada = require('../models/Temporada');
 
 const seedTemporadas = async () => {
-    try {
-        await Temporada.deleteMany({});
-
-        const breakingBad = await Serie.findOne({ nombre: 'Breaking Bad' });
-        const strangerThings = await Serie.findOne({ nombre: 'Stranger Things' });
-        const gameOfThrones = await Serie.findOne({ nombre: 'Game of Thrones' });
-        const theCrown = await Serie.findOne({ nombre: 'The Crown' });
-        const theMandolorian = await Serie.findOne({ nombre: 'The Mandalorian' });
-
-        const temporadas = [
-            // Breaking Bad
-            { numeroTemporada: 1, episodios: [], serie: breakingBad._id },
-            { numeroTemporada: 2, episodios: [], serie: breakingBad._id },
-            { numeroTemporada: 3, episodios: [], serie: breakingBad._id },
-            { numeroTemporada: 4, episodios: [], serie: breakingBad._id },
-            { numeroTemporada: 5, episodios: [], serie: breakingBad._id },
-        
-            // Stranger Things
-            { numeroTemporada: 1, episodios: [], serie: strangerThings._id },
-            { numeroTemporada: 2, episodios: [], serie: strangerThings._id },
-            { numeroTemporada: 3, episodios: [], serie: strangerThings._id },
-            { numeroTemporada: 4, episodios: [], serie: strangerThings._id },
-
-            // Game of Thrones
-            { numeroTemporada: 1, episodios: [], serie: gameOfThrones._id },
-            { numeroTemporada: 2, episodios: [], serie: gameOfThrones._id },
-            { numeroTemporada: 3, episodios: [], serie: gameOfThrones._id },
-            { numeroTemporada: 4, episodios: [], serie: gameOfThrones._id },
-            { numeroTemporada: 5, episodios: [], serie: gameOfThrones._id },
-            { numeroTemporada: 6, episodios: [], serie: gameOfThrones._id },
-            { numeroTemporada: 7, episodios: [], serie: gameOfThrones._id },
-            { numeroTemporada: 8, episodios: [], serie: gameOfThrones._id },
-
-            // The Crown
-            { numeroTemporada: 1, episodios: [], serie: theCrown._id },
-            { numeroTemporada: 2, episodios: [], serie: theCrown._id },
-            { numeroTemporada: 3, episodios: [], serie: theCrown._id },
-            { numeroTemporada: 4, episodios: [], serie: theCrown._id },
-            { numeroTemporada: 5, episodios: [], serie: theCrown._id },
-            { numeroTemporada: 6, episodios: [], serie: theCrown._id },
-
-            // The Mandalorian
-            { numeroTemporada: 1, episodios: [], serie: theMandolorian._id },
-            { numeroTemporada: 2, episodios: [], serie: theMandolorian._id },
-            { numeroTemporada: 3, episodios: [], serie: theMandolorian._id },
-        
-        ];
-
-        await Temporada.insertMany(temporadas);
-        console.log('🌱 Temporadas sembradas correctamente');
-    } catch (error) {
-        console.error('Error al sembrar temporadas:', error);
+  console.log('Iniciando sembrado de temporadas...');
+  
+  try {
+    // Eliminar temporadas existentes
+    await Temporada.deleteMany({});
+    console.log('Temporadas anteriores eliminadas');
+    
+    // Obtener todas las series
+    const series = await Serie.find({});
+    console.log(`Encontradas ${series.length} series para crear temporadas`);
+    
+    if (series.length === 0) {
+      console.log('No hay series para crear temporadas');
+      return [];
     }
+    
+    // Array para almacenar las temporadas creadas
+    const temporadasCreadas = [];
+    
+    // Para cada serie, crear entre 3 y 8 temporadas
+    for (const serie of series) {
+      const numTemporadas = Math.floor(Math.random() * 6) + 3; // Entre 3 y 8 temporadas
+      console.log(`Creando ${numTemporadas} temporadas para "${serie.nombre}"`);
+      
+      // Crear las temporadas para esta serie
+      const temporadasDeSerie = [];
+      
+      for (let i = 1; i <= numTemporadas; i++) {
+        const temporada = new Temporada({
+          numero: i,
+          titulo: `Temporada ${i}`,
+          descripcion: `Temporada ${i} de ${serie.nombre}`,
+          serie: serie._id,
+          anio: serie.anioInicio + i - 1,
+          episodios: [] // Se rellenarán después
+        });
+        
+        await temporada.save();
+        temporadasDeSerie.push(temporada);
+        temporadasCreadas.push(temporada);
+      }
+      
+      // Actualizar la serie con las referencias a sus temporadas
+      serie.temporadas = temporadasDeSerie.map(t => t._id);
+      await serie.save();
+      
+      console.log(`✓ ${temporadasDeSerie.length} temporadas creadas para "${serie.nombre}"`);
+    }
+    
+    console.log(`Temporadas sembradas correctamente`);
+    return temporadasCreadas;
+    
+  } catch (error) {
+    console.error('Error al sembrar temporadas:', error.message);
+    return [];
+  }
 };
 
 module.exports = seedTemporadas;

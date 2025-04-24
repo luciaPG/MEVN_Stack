@@ -1,46 +1,55 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const validateJWT = async (req, res, next) => {
+exports.validateJWT = async (req, res, next) => {
   try {
-    // Get token from header
-    const token = req.header('Authorization')?.replace('Bearer ', '') || req.query.token;
+    let token;
+    
+    // Get token from Authorization header
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
     
     if (!token) {
       return res.status(401).json({
-        message: 'No token provided'
+        status: 'fail',
+        message: 'No está autorizado para acceder a esta ruta'
       });
     }
 
-    // Verify token
-    let decoded;
+    // Verify token - use same secret as in login
+    const jwtSecret = process.env.JWT_SECRET || 'your_development_jwt_secret';
+    
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
-    } catch (tokenError) {
-      console.error('Token verification error:', tokenError);
+      const decoded = jwt.verify(token, jwtSecret);
+      
+      // Find user
+      const user = await User.findById(decoded.id);
+      
+      if (!user) {
+        return res.status(401).json({
+          status: 'fail',
+          message: 'El usuario perteneciente a este token ya no existe'
+        });
+      }
+      
+      // Add user to request object
+      req.user = user;
+      next();
+    } catch (jwtError) {
+      console.error('JWT verification error:', jwtError);
       return res.status(401).json({
-        message: 'Invalid or expired token'
+        status: 'fail',
+        message: 'Token inválido o expirado',
+        error: jwtError.message
       });
     }
-    
-    // Find user
-    const user = await User.findById(decoded.id);
-    if (!user) {
-      return res.status(401).json({
-        message: 'Invalid token - user not found'
-      });
-    }
-
-    // Add user to request
-    req.user = user;
-    next();
-  } catch (error) {
-    console.error('JWT Validation Error:', error);
-    
-    return res.status(401).json({
-      message: 'Authentication error'
+  } catch (err) {
+    console.error('validateJWT error:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error al validar el token',
+      error: err.message
     });
   }
 };
-
-module.exports = { validateJWT }; 

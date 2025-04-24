@@ -1,23 +1,29 @@
-const express = require("express");
+// Rutas de progreso (progresoRoutes.js)
+const express = require('express');
 const router = express.Router();
-const { validateJWT } = require('../middlewares/validateJWT');
+const progresoController = require('../controllers/ProgresoController');
+const authController = require('../controllers/AuthController');
 
-const {
-    createProgreso,
-    getProgresoByUserId,
-    getProgresoByEpisodioId,
-    updateProgreso,
-    deleteProgreso,
-} = require("../controllers/ProgresoController");
+// Proteger todas las rutas
+router.use(authController.protect);
 
-// Apply middleware to all routes - progress requires authentication
-router.use(validateJWT);
+// Marcar episodio como visto/no visto
+router.post('/', progresoController.createProgreso);
+router.put('/:id', progresoController.updateProgreso);
 
-// Progress routes
-router.post("/", createProgreso);
-router.get("/usuario/:id", getProgresoByUserId);
-router.get("/episodio/:id", getProgresoByEpisodioId);
-router.put("/:id", updateProgreso);
-router.delete("/:id", deleteProgreso);
+// Obtener progreso
+router.get('/usuario/:id', progresoController.getProgresoByUserId);
+router.get('/episodio/:episodioId', progresoController.getProgresoByEpisodioId);
+
+// Series routes - make sure parameter names are consistent
+router.get('/series/:userId', progresoController.getSeriesWithProgress);
+router.get('/usuario/:userId/series', progresoController.getSeriesByUser); // Updated parameter to userId
+
+// Additional routes
+router.get('/usuario/:userId/series-registradas', progresoController.getUserSeries);
+router.get('/usuario/:userId/serie/:serieId/progreso', progresoController.getSerieProgress);
+
+// Eliminar progreso
+router.delete('/:id', progresoController.deleteProgreso);
 
 module.exports = router;

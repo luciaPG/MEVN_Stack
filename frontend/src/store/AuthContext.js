@@ -1,43 +1,168 @@
-import { reactive, provide, inject } from "vue";
-import axios from "axios";
+import { reactive, provide, inject } from 'vue';
+import axios from 'axios';
 
-const authState = reactive({
+// Create a symbol for the authentication context
+const AuthSymbol = Symbol();
+
+// Simple error message translations
+const errorMessages = {
+  'Correo o contraseña incorrectos': 'Incorrect email or password',
+  'No se recibió respuesta del servidor. Verifique su conexión a internet.': 'No response received from server. Please check your internet connection.',
+  'No se puede conectar al servidor. Por favor, verifica que el servidor esté en funcionamiento.': 'Cannot connect to the server. Please verify that the server is running.',
+  'Formato de respuesta inválido del servidor': 'Invalid response format from server'
+};
+
+// Create the reactive auth state
+export const globalAuth = reactive({
+  isAuthenticated: false,
   user: null,
-  isAuthenticated: localStorage.getItem("jwt") ? true : false,
+  token: null,
+  lastError: null,
+  
+  // Add utility methods for authentication
+  getIsAuthenticated() {
+    return this.isAuthenticated;
+  },
+  
+  getUserId() {
+    return this.user ? this.user._id || this.user.id : null;
+  },
+  
+  isAdmin() {
+    return this.user?.role === 'admin';
+  },
+  
+  // Improved getAuthHeaders method for API requests
+  getAuthHeaders() {
+    const token = this.token || localStorage.getItem('jwt');
+    if (!token) {
+      console.warn('No authentication token available');
+      return {};
+    }
+    console.log('Using token for authentication:', token.substring(0, 10) + '...');
+    return {
+      Authorization: `Bearer ${token}`
+    };
+  },
+  
+  async login({ email, password }) {
+    try {
+      this.lastError = null;
+      console.log("Attempting login with:", email);
+      
+      // Send password as plaintext - no encryption at client side
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        email,
+        password,
+      });
+
+      console.log("Login response:", response.data);
+
+      const { token, data } = response.data;
+      const user = data?.user;
+
+      if (!token || !user) {
+        console.error("Invalid response format:", response.data);
+        throw new Error("Formato de respuesta inválido del servidor");
+      }
+
+      this.setUser(user);
+      this.setToken(token);
+      this.isAuthenticated = true;
+
+      return user;
+    } catch (error) {
+      console.error("Login error:", error);
+      
+      let errorMessage = "An unknown error occurred";
+      
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        console.error("Response headers:", error.response.headers);
+        
+        if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+        errorMessage = "No se recibió respuesta del servidor. Verifique su conexión a internet.";
+      }
+      
+      if (error.code === 'ERR_NETWORK') {
+        errorMessage = "No se puede conectar al servidor. Por favor, verifica que el servidor esté en funcionamiento.";
+      }
+      
+      const translatedMessage = errorMessages[errorMessage] || errorMessage;
+      
+      this.lastError = translatedMessage;
+      
+      throw new Error(translatedMessage);
+    }
+  },
+  
+  async loadUserData() {
+    const token = localStorage.getItem('jwt');
+    if (token) {
+      this.token = token;
+  
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          this.user = JSON.parse(userData);
+          this.isAuthenticated = true;
+        } catch (e) {
+          console.error('Failed to parse user data', e);
+          this.logout();
+        }
+      }
+  
+      return true;
+    }
+    return false;
+  },
+
+  setUser(user) {
+    this.user = user;
+    this.isAuthenticated = !!user;
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+  },
+  
+  setToken(token) {
+    this.token = token;
+    localStorage.setItem('jwt', token);
+  },
+  
+  logout() {
+    this.user = null;
+    this.token = null;
+    this.isAuthenticated = false;
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('user');
+  },
+
+  getLastError() {
+    return this.lastError;
+  },
+  
+  clearError() {
+    this.lastError = null;
+  }
 });
 
-const login = async (credentials) => {
-  try {
-    const response = await axios.post(
-      "http://localhost:5000/api/auth/login",
-      credentials
-    );
-    authState.user = response.data.data.user;
-    authState.isAuthenticated = true;
-    localStorage.setItem("jwt", response.data.token);
-  } catch (error) {
-    throw error.response?.data?.message || "Error al iniciar sesión";
-  }
-};
+// Provider and injector functions
+export function provideAuth() {
+  provide(AuthSymbol, globalAuth);
+}
 
-const logout = () => {
-  authState.user = null;
-  authState.isAuthenticated = false;
-  localStorage.removeItem("jwt");
-};
-
-export const provideAuth = () => {
-  provide("auth", {
-    authState,
-    login,
-    logout,
-  });
-};
-
-export const useAuth = () => {
-  const auth = inject("auth");
+export function useAuth() {
+  const auth = inject(AuthSymbol);
   if (!auth) {
-    throw new Error("useAuth debe ser usado dentro de un provideAuth");
+    throw new Error('No auth context provided');
   }
   return auth;
-};
+}

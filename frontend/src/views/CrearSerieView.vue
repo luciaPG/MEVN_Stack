@@ -5,6 +5,10 @@
     </div>
 
     <form @submit.prevent="handleSubmit" class="serie-form">
+      <div v-if="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
       <div class="form-group">
         <label for="nombre">Nombre de la serie*</label>
         <input
@@ -55,33 +59,96 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
+import { useAuth } from "../store/AuthContext";
 
 const router = useRouter();
+const { authState } = useAuth();
 const isSubmitting = ref(false);
+const errorMessage = ref("");
+const currentUserId = ref(null);
 
 const serie = ref({
   nombre: "",
   genero: "",
   sinopsis: "",
+  usuario: null,
 });
+
+onMounted(() => {
+  // Get current user ID from auth state
+  if (authState.user && authState.user._id) {
+    currentUserId.value = authState.user._id;
+    serie.value.usuario = currentUserId.value;
+  } else if (localStorage.getItem("jwt")) {
+    // If we have a token but no user data, attempt to get user data
+    fetchUserData();
+  }
+});
+
+const fetchUserData = async () => {
+  try {
+    const token = localStorage.getItem("jwt");
+    if (!token) return;
+
+    const response = await axios.get("http://localhost:5000/api/auth/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.data && response.data._id) {
+      currentUserId.value = response.data._id;
+      serie.value.usuario = currentUserId.value;
+    }
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+  }
+};
 
 const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
+    errorMessage.value = "";
 
-    const response = await axios.post("http://localhost:5000/api/series", {
+    if (
+      !serie.value.nombre.trim() ||
+      !serie.value.genero.trim() ||
+      !serie.value.sinopsis.trim()
+    ) {
+      errorMessage.value = "Todos los campos marcados con * son obligatorios";
+      return;
+    }
+
+    const payload = {
       nombre: serie.value.nombre.trim(),
       genero: serie.value.genero.trim(),
       sinopsis: serie.value.sinopsis.trim(),
-    });
+    };
+
+    // Add user ID if available
+    if (currentUserId.value) {
+      payload.usuario = currentUserId.value;
+    }
+
+    const response = await axios.post(
+      "http://localhost:5000/api/series",
+      payload
+    );
 
     router.push(`/detalles/${response.data._id}`);
   } catch (error) {
     console.error("Error al crear la serie:", error);
-    alert("Ocurrió un error al crear la serie. Por favor intenta nuevamente.");
+
+    if (error.response && error.response.data) {
+      errorMessage.value =
+        error.response.data.message || "Ocurrió un error al crear la serie";
+    } else {
+      errorMessage.value =
+        "Ocurrió un error al crear la serie. Por favor intenta nuevamente.";
+    }
   } finally {
     isSubmitting.value = false;
   }
@@ -92,7 +159,9 @@ const resetForm = () => {
     nombre: "",
     genero: "",
     sinopsis: "",
+    usuario: currentUserId.value,
   };
+  errorMessage.value = "";
 };
 </script>
 
@@ -133,6 +202,16 @@ const resetForm = () => {
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  text-align: center;
 }
 
 .form-group {

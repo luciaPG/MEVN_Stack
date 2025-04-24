@@ -1,108 +1,265 @@
 <template>
   <div class="serie-card">
-    <h2 class="serie-nombre">{{ nombre }}</h2>
-    <p class="serie-genero">
-      <span class="badge genero">{{ genero }}</span>
-    </p>
-    <p class="serie-sinopsis">{{ sinopsis }}</p>
-    <button @click="verDetalles" class="detalles-btn">Ver detalles</button>
+    <div class="serie-info">
+      <h3>{{ nombre }}</h3>
+      <p class="sinopsis">{{ sinopsis }}</p>
+      
+      <div class="progress-container" v-if="progreso !== undefined">
+        <div class="progress-label">
+          <span>Progreso: {{ progreso }}%</span>
+          <span>{{ episodiosVistos }}/{{ totalEpisodios }} episodios</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: `${progreso}%` }" :class="progressClass"></div>
+        </div>
+      </div>
+      
+      <div class="generos">
+        <span v-for="(gen, index) in generoArray" :key="index" class="genero-tag">
+          {{ gen }}
+        </span>
+      </div>
+      
+      <div class="actions">
+        <router-link :to="`/detalles/${id}`" class="action-btn watch">Ver</router-link>
+        <button @click="confirmDelete" class="action-btn delete">Eliminar</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { defineProps } from "vue";
-import { useRouter } from "vue-router";
-
-const router = useRouter();
+// Import the functions that ESLint is complaining about
+import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
-  id: [String, Number],
+  id: String,
   nombre: String,
   sinopsis: String,
-  genero: String,
+  genero: {
+    type: [Array, String],
+    default: () => []
+  },
+  progreso: {
+    type: Number,
+    default: undefined
+  },
+  episodiosVistos: {
+    type: Number,
+    default: 0
+  },
+  totalEpisodios: {
+    type: Number,
+    default: 0
+  }
 });
 
-const verDetalles = () => {
-  router.push(`/detalles/${props.id}`);
+const emit = defineEmits([
+  "eliminar"
+]);
+
+import { computed } from "vue";
+
+
+const generoArray = computed(() => {
+  if (Array.isArray(props.genero)) {
+    return props.genero;
+  } else if (typeof props.genero === "string") {
+    return props.genero.split(",").map(g => g.trim());
+  }
+  return [];
+});
+
+const progressClass = computed(() => {
+  if (props.progreso === 100) return "complete";
+  if (props.progreso > 75) return "almost-complete";
+  if (props.progreso > 25) return "in-progress";
+  return "just-started";
+});
+
+const confirmDelete = () => {
+  if (confirm(`¿Estás seguro de que deseas eliminar la serie "${props.nombre}"?`)) {
+    emit("eliminar", props.id);
+  }
 };
 </script>
 
 <style scoped>
 .serie-card {
-  background: #f3f4f6;
-  padding: 1.5rem;
+  width: 300px;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  width: 90%;
-  max-width: 1000px;
-  transition: transform 0.2s ease;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .serie-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-.serie-nombre {
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: #222;
-  text-align: left;
+.serie-image {
+  height: 200px;
+  position: relative;
+  overflow: hidden;
 }
 
-.serie-genero {
-  text-align: left;
-  margin-bottom: 0.5rem;
+.serie-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
 }
 
-.serie-sinopsis {
-  text-align: left;
+.serie-card:hover .serie-image img {
+  transform: scale(1.05);
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.serie-card:hover .overlay {
+  opacity: 1;
+}
+
+.view-btn {
+  padding: 8px 16px;
+  background-color: #8c00d7;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.view-btn:hover {
+  background-color: #7a00b8;
+}
+
+.serie-info {
+  padding: 1.25rem;
+}
+
+h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.sinopsis {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-container {
   margin-bottom: 1rem;
 }
 
-.badge {
-  display: inline-block;
-  padding: 0.35rem 0.75rem;
-  border-radius: 50px;
-  font-size: 0.9rem;
-  font-weight: 600;
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  color: #555;
 }
 
-.badge.genero {
-  background-color: #e0e7ff;
-  color: #4f46e5;
-}
-
-.detalles-btn {
-  margin-top: 1rem;
-  padding: 0.6rem 1rem;
-  border: none;
-  background-color: #007bff;
-  color: white;
-  font-weight: bold;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.detalles-btn {
+.progress-bar {
   width: 100%;
-  background: linear-gradient(90deg, #8c00d7, #eb7725);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
-  position: relative;
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-.detalles-btn:hover {
-  background: linear-gradient(90deg, #ea7626, #8d01d6);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 10px rgba(37, 99, 235, 0.15);
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.progress-fill.just-started {
+  background: linear-gradient(90deg, #4A90E2, #5A9AE6);
+}
+
+.progress-fill.in-progress {
+  background: linear-gradient(90deg, #F5A623, #F7B946);
+}
+
+.progress-fill.almost-complete {
+  background: linear-gradient(90deg, #7ED321, #8FDB3E);
+}
+
+.progress-fill.complete {
+  background: linear-gradient(90deg, #50E3C2, #6CE9CF);
+}
+
+.generos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.genero-tag {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  background-color: #f0f0f0;
+  color: #555;
+  border-radius: 4px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s;
+}
+
+.action-btn.watch {
+  background-color: #8c00d7;
+  color: white;
+  flex: 1;
+}
+
+.action-btn.watch:hover {
+  background-color: #7a00b8;
+}
+
+.action-btn.delete {
+  background-color: #FF3B30;
+  color: white;
+  margin-left: 0.5rem;
+}
+
+.action-btn.delete:hover {
+  background-color: #E02C22;
 }
 </style>

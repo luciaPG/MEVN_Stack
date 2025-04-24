@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Login from "../components/LoginForm.vue";
 import Dashboard from "../components/Dashboard.vue";
-import Home from "../components/Home.vue";
+import HomeScreen from "../components/HomeView.vue";
 import Register from "@/views/Register.vue";
 import { authGuard } from "./authGuard";
 import SeriesView from "@/views/SeriesView.vue";
@@ -14,7 +14,7 @@ import EditarTemporadaView from "@/views/EditarTemporadaView.vue";
 import EditarEpisodioView from "@/views/EditarEpisodioView.vue";
 
 const routes = [
-  { path: "/", component: Home },
+  { path: "/", component: HomeScreen },
   { path: "/login", component: Login },
   { path: "/dashboard", component: Dashboard, beforeEnter: authGuard },
   {

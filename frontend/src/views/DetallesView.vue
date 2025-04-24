@@ -75,7 +75,9 @@
               :numeroEpisodio="episodio.numeroEpisodio"
               :fechaEstreno="episodio.fechaEstreno"
               :id="episodio._id"
+              :visto="esEpisodioVisto(episodio._id)"
               @eliminar="eliminarEpisodio"
+              @actualizar-visto="actualizarEstadoVisto"
             />
           </div>
 
@@ -114,12 +116,17 @@ import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import EpisodioCard from "@/components/EpisodioCard.vue";
+import { globalAuth } from "../store/AuthContext";
 
 const route = useRoute();
 const router = useRouter();
 const serie = ref(null);
 const temporadas = ref([]);
 const loading = ref(true);
+const progresos = ref([]);
+
+const isAuthenticated = computed(() => globalAuth && globalAuth.isAuthenticated);
+const authUser = computed(() => globalAuth && globalAuth.user);
 
 const temporadasOrdenadas = computed(() => {
   return [...temporadas.value].sort(
@@ -133,6 +140,9 @@ const episodiosOrdenados = (episodios) => {
 
 onMounted(async () => {
   await cargarDatos();
+  if (isAuthenticated.value && authUser.value) {
+    await cargarProgresos();
+  }
 });
 
 const cargarDatos = async () => {
@@ -159,6 +169,82 @@ const cargarDatos = async () => {
     console.error("Error al cargar los detalles:", err);
   } finally {
     loading.value = false;
+  }
+};
+
+const cargarProgresos = async () => {
+  if (!authUser.value || !authUser.value._id) return;
+
+  try {
+    const response = await axios.get(
+      `http://localhost:5000/api/progreso/usuario/${authUser.value._id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+        },
+      }
+    );
+    progresos.value = response.data;
+  } catch (error) {
+    console.error("Error al cargar progresos:", error);
+  }
+};
+
+const esEpisodioVisto = (episodioId) => {
+  if (!progresos.value.length) return false;
+
+  const progreso = progresos.value.find(
+    (p) => p.episodio._id === episodioId || p.episodio === episodioId
+  );
+
+  return progreso ? progreso.visto : false;
+};
+
+const actualizarEstadoVisto = async ({ id, visto }) => {
+  if (!authUser.value || !authUser.value._id) {
+    alert("Debes iniciar sesión para registrar tu progreso");
+    return;
+  }
+
+  try {
+    // Buscar si ya existe un progreso para este episodio
+    const progresoExistente = progresos.value.find(
+      (p) => p.episodio._id === id || p.episodio === id
+    );
+
+    if (progresoExistente) {
+      // Actualizar progreso existente
+      await axios.put(
+        `http://localhost:5000/api/progreso/${progresoExistente._id}`,
+        { visto },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+          },
+        }
+      );
+    } else {
+      // Crear nuevo progreso
+      await axios.post(
+        "http://localhost:5000/api/progreso",
+        {
+          episodio: id,
+          visto,
+          usuario: authUser.value._id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+          },
+        }
+      );
+    }
+
+    // Recargar progresos
+    await cargarProgresos();
+  } catch (error) {
+    console.error("Error al actualizar estado de episodio:", error);
+    alert("No se pudo actualizar el estado del episodio");
   }
 };
 

@@ -48,20 +48,20 @@ const getAllSeries = async (req, res) => {
 // READ BY USER ID (SERIES UPLOADED BY USER)
 const getSeriesByUserId = async (req, res) => {
     try {
-
         const { userId } = req.params;
-        const user = await User.findById(userId).populate('series');
+
+        const user = await User.findById(userId).populate('registeredSeries');
         if (!user) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
-        res.status(200).json(user.series);
+
+        res.status(200).json(user.registeredSeries);
     } catch (error) {
         console.error('Error al obtener series del usuario:', error);
         res.status(500).json({ message: "Error al obtener series del usuario" });
     }
 };
 
-// REGISTER SERIES TO USER PROFILE
 const registerSeriesToUser = async (req, res) => {
     try {
         const { userId, serieId } = req.body;
@@ -69,32 +69,28 @@ const registerSeriesToUser = async (req, res) => {
         if (!userId || !serieId) {
             return res.status(400).json({ message: "Se requiere ID de usuario y serie" });
         }
-        
-        // Check if user exists
+
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
-        
-        // Check if serie exists
+
         const serie = await Serie.findById(serieId);
         if (!serie) {
             return res.status(404).json({ message: "Serie no encontrada" });
         }
-        
-        // Check if the serie is already registered to user
-        if (user.registeredSeries && user.registeredSeries.includes(serieId)) {
-            return res.status(400).json({ message: "Esta serie ya está registrada en tu perfil" });
-        }
-        
-        // Add serie to user's registeredSeries
+
         if (!user.registeredSeries) {
             user.registeredSeries = [];
         }
-        
-        user.series.push(serieId);
+
+        if (user.registeredSeries.includes(serieId)) {
+            return res.status(400).json({ message: "Esta serie ya está registrada en tu perfil" });
+        }
+
+        user.registeredSeries.push(serieId);
         await user.save();
-        
+
         res.status(200).json({ message: "Serie registrada correctamente en tu perfil" });
     } catch (error) {
         console.error('Error al registrar serie para usuario:', error);
@@ -102,28 +98,26 @@ const registerSeriesToUser = async (req, res) => {
     }
 };
 
+
 // UNREGISTER SERIES FROM USER PROFILE
 const unregisterSeriesFromUser = async (req, res) => {
     try {
         const { userId, serieId } = req.params;
-        
-        // Check if user exists
+
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
-        
-        // Check if the user has registered series
+
         if (!user.registeredSeries || !user.registeredSeries.includes(serieId)) {
             return res.status(400).json({ message: "Esta serie no está en tu perfil" });
         }
-        
-        // Remove serie from user's registeredSeries
-        user.series = user.series.filter(
+
+        user.registeredSeries = user.registeredSeries.filter(
             id => id.toString() !== serieId
         );
         await user.save();
-        
+
         res.status(200).json({ message: "Serie eliminada de tu perfil" });
     } catch (error) {
         console.error('Error al eliminar serie del perfil de usuario:', error);

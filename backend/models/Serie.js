@@ -21,7 +21,21 @@ const serieSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "Temporada",
     }
-  ],
+  ]
 }, { timestamps: true });
+
+// Añadir consulta virtual para obtener usuarios que tienen esta serie
+serieSchema.virtual('usuarios', {
+  ref: 'User',
+  localField: '_id',
+  foreignField: 'registeredSeries'
+});
+
+// Añadir consulta virtual para obtener todos los progresos relacionados con esta serie
+serieSchema.virtual('progresos', {
+  ref: 'Progreso',
+  localField: '_id',
+  foreignField: 'serie'
+});
 
 module.exports = mongoose.model('Serie', serieSchema);

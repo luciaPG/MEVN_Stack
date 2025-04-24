@@ -87,94 +87,36 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
+import { useAuth } from "../store/AuthContext";
 
 const router = useRouter();
+const authState = useAuth(); // This directly gets the auth object
 const isDropdownOpen = ref(false);
 const isMobileMenuOpen = ref(false);
-const authToken = ref(localStorage.getItem("jwt"));
-const userData = ref(null);
 const imageError = ref(false);
 
 const isAuthenticated = computed(() => {
-  return !!authToken.value;
+  return authState.isAuthenticated;
 });
 
 const userName = computed(() => {
-  return userData.value?.username || "";
+  return authState.user?.username || "";
 });
 
 const userProfileImage = computed(() => {
-  if (imageError.value || !userData.value?.profileImage) {
+  if (imageError.value || !authState.user?.profileImage) {
     const hash = userName.value ? userName.value.charCodeAt(0) % 100 : 44;
     const gender = hash % 2 === 0 ? "men" : "women";
     return `https://randomuser.me/api/portraits/${gender}/${hash}.jpg`;
   }
-  return userData.value.profileImage;
+  return authState.user.profileImage;
 });
 
 const handleImageError = () => {
   imageError.value = true;
 };
-
-const fetchUserData = async () => {
-  if (!authToken.value) return;
-
-  try {
-    const response = await axios.get("http://localhost:5000/api/users/me", {
-      headers: {
-        Authorization: `Bearer ${authToken.value}`,
-      },
-    });
-    userData.value = response.data.data.user;
-    imageError.value = false;
-  } catch (error) {
-    console.error("Error al cargar datos del usuario:", error);
-    try {
-      const storedUser = JSON.parse(localStorage.getItem("userData"));
-      if (storedUser) {
-        userData.value = storedUser;
-      }
-    } catch (e) {
-      console.error(
-        "No se pudieron recuperar datos del usuario del almacenamiento local"
-      );
-    }
-  }
-};
-
-window.addEventListener("storage", (event) => {
-  if (event.key === "jwt") {
-    authToken.value = event.newValue;
-    if (event.newValue) {
-      fetchUserData();
-    } else {
-      userData.value = null;
-    }
-  }
-});
-
-onMounted(() => {
-  if (isAuthenticated.value) {
-    fetchUserData();
-  }
-
-  const checkInterval = setInterval(() => {
-    const currentToken = localStorage.getItem("jwt");
-    if (authToken.value !== currentToken) {
-      authToken.value = currentToken;
-      if (currentToken) {
-        fetchUserData();
-      } else {
-        userData.value = null;
-      }
-    }
-  }, 3000);
-
-  return () => clearInterval(checkInterval);
-});
 
 const navItems = [
   { name: "Inicio", path: "/" },
@@ -198,13 +140,9 @@ const toggleMobileMenu = () => {
 };
 
 const logout = () => {
-  localStorage.removeItem("jwt");
-  localStorage.removeItem("userData");
-  authToken.value = null;
-  userData.value = null;
+  authState.logout(); // Call the logout method directly on authState
   router.push("/login");
   isDropdownOpen.value = false;
-  isMobileMenuOpen.value = false;
 };
 </script>
 

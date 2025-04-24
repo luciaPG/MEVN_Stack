@@ -74,7 +74,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
+import { globalAuth } from "../store/AuthContext";
 
 const email = ref("");
 const password = ref("");
@@ -91,12 +91,11 @@ const handleLogin = async () => {
   isLoading.value = true;
 
   try {
-    const response = await axios.post("http://localhost:5000/api/auth/login", {
+    // Use global auth for login
+    await globalAuth.login({
       email: email.value,
       password: password.value,
     });
-
-    localStorage.setItem("jwt", response.data.token);
 
     if (rememberMe.value) {
       localStorage.setItem("rememberedEmail", email.value);
@@ -104,8 +103,10 @@ const handleLogin = async () => {
       localStorage.removeItem("rememberedEmail");
     }
 
+    console.log("Login successful, redirecting to dashboard");
     router.push("/dashboard");
   } catch (err) {
+    console.error("Login error:", err);
     error.value = err.response?.data?.message || "Error al iniciar sesión";
   } finally {
     isLoading.value = false;
