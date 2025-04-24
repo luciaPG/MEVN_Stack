@@ -1,6 +1,6 @@
 const Progreso = require("../models/Progreso");
 const Episodio = require("../models/Episodio");
-const User = require("../models/UserModel");
+const User = require("../models/User");
 
 // CREATE
 const createProgreso = async (req, res) => {

@@ -35,7 +35,11 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: {
     type: Date
-  }
+  },
+  series: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Serie'
+  }]
 }, { 
   timestamps: true,
   toJSON: { 

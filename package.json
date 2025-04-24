@@ -8,7 +8,7 @@
     "start:frontend": " cd frontend && npm run serve",
     "seed:backend": " cd backend && node seeders/index.js",
     "install:all": "npm install && cd frontend && npm install && cd ..",
-    "lint":" npm run lint --fix"
+    "lint": " cd frontend && npm run lint -- --fix && cd .."
   },
   "keywords": [],
   "author": "",

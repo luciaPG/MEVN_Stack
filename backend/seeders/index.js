@@ -4,6 +4,7 @@ const seedUsers = require('./UserSeeders');
 const seedSeries = require('./SerieSeeders');
 const seedTemporadas = require('./TemporadaSeeders');
 const seedEpisodios = require('./EpisodioSeeders');
+const seedSerieRegistrations = require('./SerieRegistrationSeeders');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/nombre_db';
 
@@ -21,6 +22,8 @@ const runSeeders = async () => {
     await seedSeries();
     await seedTemporadas();
     await seedEpisodios();
+    // Register series to users after all other seeds have run
+    await seedSerieRegistrations();
 
     if (require.main === module) {
       await mongoose.connection.disconnect();
