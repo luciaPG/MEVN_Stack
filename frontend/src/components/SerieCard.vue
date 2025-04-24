@@ -1,7 +1,9 @@
 <template>
   <div class="serie-card">
     <h2 class="serie-nombre">{{ nombre }}</h2>
-    <p class="serie-genero">{{ genero }}</p>
+    <p class="serie-genero">
+      <span class="badge genero">{{ genero }}</span>
+    </p>
     <p class="serie-sinopsis">{{ sinopsis }}</p>
     <button @click="verDetalles" class="detalles-btn">Ver detalles</button>
   </div>
@@ -48,9 +50,27 @@ const verDetalles = () => {
   text-align: left;
 }
 
-.serie-genero,
+.serie-genero {
+  text-align: left;
+  margin-bottom: 0.5rem;
+}
+
 .serie-sinopsis {
   text-align: left;
+  margin-bottom: 1rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.badge.genero {
+  background-color: #e0e7ff;
+  color: #4f46e5;
 }
 
 .detalles-btn {
