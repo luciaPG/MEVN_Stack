@@ -30,7 +30,7 @@
 
       <div v-else class="temporadas-container">
         <div
-          v-for="temporada in temporadas"
+          v-for="temporada in temporadasOrdenadas"
           :key="temporada._id"
           class="temporada"
         >
@@ -68,7 +68,7 @@
 
           <div v-else class="episodios-list-vertical">
             <EpisodioCard
-              v-for="episodio in temporada.episodios"
+              v-for="episodio in episodiosOrdenados(temporada.episodios)"
               :key="episodio._id"
               :nombre="episodio.nombre"
               :sinopsis="episodio.sinopsis"
@@ -110,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import EpisodioCard from "@/components/EpisodioCard.vue";
@@ -120,6 +120,16 @@ const router = useRouter();
 const serie = ref(null);
 const temporadas = ref([]);
 const loading = ref(true);
+
+const temporadasOrdenadas = computed(() => {
+  return [...temporadas.value].sort(
+    (a, b) => a.numeroTemporada - b.numeroTemporada
+  );
+});
+
+const episodiosOrdenados = (episodios) => {
+  return [...episodios].sort((a, b) => a.numeroEpisodio - b.numeroEpisodio);
+};
 
 onMounted(async () => {
   await cargarDatos();
