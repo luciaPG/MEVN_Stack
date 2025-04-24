@@ -59,8 +59,6 @@ const seedSeries = async () => {
 
         await Serie.insertMany(series);
         console.log('🌱  Series creadas exitosamente:');
-        console.log(series.map(s => ({ nombre: s.nombre, genero: s.genero })));
-
         return true;
     } catch (err) {
         console.error('Error al sembrar series:', err.message);
