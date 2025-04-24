@@ -2,9 +2,16 @@
   <div class="crear-episodio-view">
     <div class="header">
       <h1>Crear Nuevo Episodio</h1>
+      <router-link :to="`/detalles/${serieId}`" class="back-link">
+        ← Volver a la serie
+      </router-link>
     </div>
 
     <form @submit.prevent="handleSubmit" class="episodio-form">
+      <div v-if="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
       <div class="form-group">
         <label for="nombre">Nombre del episodio*</label>
         <input
@@ -14,6 +21,7 @@
           required
           placeholder="Ej: Pilot"
           class="form-input"
+          :disabled="isSubmitting"
         />
       </div>
 
@@ -22,11 +30,13 @@
         <input
           type="number"
           id="numeroEpisodio"
-          v-model="episodio.numeroEpisodio"
+          v-model.number="episodio.numeroEpisodio"
           required
           min="1"
           class="form-input"
+          :disabled="isSubmitting"
         />
+        <small class="hint">Ingrese un número mayor a 0</small>
       </div>
 
       <div class="form-group">
@@ -36,6 +46,7 @@
           id="fechaEstreno"
           v-model="episodio.fechaEstreno"
           class="form-input"
+          :disabled="isSubmitting"
         />
       </div>
 
@@ -47,14 +58,26 @@
           rows="5"
           class="form-textarea"
           placeholder="Descripción del episodio..."
+          :disabled="isSubmitting"
         ></textarea>
       </div>
 
       <div class="form-actions">
-        <button type="button" @click="resetForm" class="cancel-btn">
+        <button
+          type="button"
+          @click="resetForm"
+          class="cancel-btn"
+          :disabled="isSubmitting"
+        >
           Limpiar
         </button>
-        <button type="submit" class="submit-btn" :disabled="isSubmitting">
+        <button
+          type="submit"
+          class="submit-btn"
+          :disabled="
+            isSubmitting || !episodio.nombre || !episodio.numeroEpisodio
+          "
+        >
           <span v-if="!isSubmitting">Crear Episodio</span>
           <span v-else class="loading-spinner"></span>
         </button>
@@ -71,30 +94,50 @@ import axios from "axios";
 const route = useRoute();
 const router = useRouter();
 const isSubmitting = ref(false);
+const errorMessage = ref("");
 const temporadaId = ref("");
 const serieId = ref("");
 
 const episodio = ref({
   nombre: "",
-  numeroEpisodio: "",
+  numeroEpisodio: null,
   fechaEstreno: "",
   sinopsis: "",
   temporada: "",
 });
 
 onMounted(() => {
-  temporadaId.value = route.params.temporadaId;
+  const pathParts = route.path.split("/");
+  temporadaId.value = pathParts[2];
+
   serieId.value = route.params.serieId;
+
   episodio.value.temporada = temporadaId.value;
 });
 
 const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
+    errorMessage.value = "";
+
+    if (
+      !episodio.value.numeroEpisodio ||
+      episodio.value.numeroEpisodio < 1 ||
+      episodio.value.numeroEpisodio > 1000000
+    ) {
+      errorMessage.value =
+        "El número de episodio debe ser mayor a 0 o menor a 1000000";
+      return;
+    }
+
+    if (!episodio.value.nombre.trim()) {
+      errorMessage.value = "El nombre del episodio es obligatorio";
+      return;
+    }
 
     const payload = {
       nombre: episodio.value.nombre.trim(),
-      numeroEpisodio: parseInt(episodio.value.numeroEpisodio),
+      numeroEpisodio: episodio.value.numeroEpisodio,
       temporada: temporadaId.value,
       sinopsis: episodio.value.sinopsis.trim(),
     };
@@ -103,13 +146,28 @@ const handleSubmit = async () => {
       payload.fechaEstreno = episodio.value.fechaEstreno;
     }
 
-    await axios.post("http://localhost:5000/api/episodios", payload);
-    router.push(`/series/${serieId.value}`);
+    const response = await axios.post(
+      "http://localhost:5000/api/episodios",
+      payload
+    );
+
+    if (response.data && response.data._id) {
+      router.push(`/detalles/${serieId.value}`);
+    } else {
+      throw new Error("No se recibió una respuesta válida del servidor");
+    }
   } catch (error) {
     console.error("Error al crear el episodio:", error);
-    alert(
-      "Ocurrió un error al crear el episodio. Por favor intenta nuevamente."
-    );
+
+    if (error.response && error.response.data) {
+      errorMessage.value =
+        error.response.data.message ||
+        "Ocurrió un error al crear el episodio. Por favor intenta nuevamente.";
+    } else {
+      errorMessage.value =
+        error.message ||
+        "Ocurrió un error al conectar con el servidor. Verifica tu conexión.";
+    }
   } finally {
     isSubmitting.value = false;
   }
@@ -118,11 +176,12 @@ const handleSubmit = async () => {
 const resetForm = () => {
   episodio.value = {
     nombre: "",
-    numeroEpisodio: "",
+    numeroEpisodio: null,
     fechaEstreno: "",
     sinopsis: "",
     temporada: temporadaId.value,
   };
+  errorMessage.value = "";
 };
 </script>
 
@@ -176,6 +235,13 @@ const resetForm = () => {
   color: #444;
 }
 
+.hint {
+  display: block;
+  margin-top: 0.25rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
 .form-input,
 .form-textarea {
   width: 100%;
@@ -216,8 +282,13 @@ const resetForm = () => {
   transition: all 0.3s;
 }
 
-.cancel-btn:hover {
+.cancel-btn:hover:not(:disabled) {
   background: #f5f5f5;
+}
+
+.cancel-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .submit-btn {
@@ -260,6 +331,16 @@ const resetForm = () => {
   to {
     transform: rotate(360deg);
   }
+}
+
+.error-message {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
