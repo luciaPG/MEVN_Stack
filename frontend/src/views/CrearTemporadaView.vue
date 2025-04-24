@@ -2,7 +2,7 @@
   <div class="crear-temporada-view">
     <div class="header">
       <h1>Crear Nueva Temporada</h1>
-      <router-link :to="`/series/${serieId}`" class="back-link">
+      <router-link :to="`/detalles/${serieId}`" class="back-link">
         ← Volver a la serie
       </router-link>
     </div>
