@@ -9,6 +9,7 @@ import DetallesView from "@/views/DetallesView.vue";
 import CrearSerieView from "@/views/CrearSerieView.vue";
 import CrearTemporadaView from "@/views/CrearTemporadaView.vue";
 import CrearEpisodioView from "@/views/CrearEpisodioView.vue";
+import EditarSerieView from "@/views/EditarSerieView.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -28,6 +29,7 @@ const routes = [
     path: "/temporadas/:id/episodios/nuevo",
     component: CrearEpisodioView,
   },
+  { path: "/series/:id/editar", component: EditarSerieView },
 ];
 
 const router = createRouter({
