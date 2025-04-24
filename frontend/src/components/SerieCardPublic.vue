@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { defineProps, defineEmits, onMounted, ref, watch } from "vue";
+import { defineProps, defineEmits, onMounted, ref, watch, computed } from "vue";
 import { globalAuth } from "../store/AuthContext";
 import axios from "axios";
 
@@ -8,6 +8,16 @@ const router = useRouter();
 const emit = defineEmits(["register", "unregister"]);
 const isUserRegistered = ref(false);
 const isLoading = ref(true);
+
+// This handles both cases where isAuthenticated is property or function
+const isLoggedIn = computed(() => {
+  // Check if isAuthenticated is a function first
+  if (typeof globalAuth.isAuthenticated === 'function') {
+    return globalAuth.isAuthenticated();
+  }
+  // Fallback to property access
+  return globalAuth.isAuthenticated;
+});
 
 const props = defineProps({
   id: {
@@ -39,14 +49,14 @@ onMounted(() => {
 const getUserIdFromToken = () => {
   const token = localStorage.getItem("jwt");
   if (!token) return null;
-  
+
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
       return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
-    
+
     const decoded = JSON.parse(jsonPayload);
     const userId = decoded.id || decoded._id || decoded.sub || decoded.userId;
     return userId;
@@ -58,21 +68,25 @@ const getUserIdFromToken = () => {
 
 const checkIfSerieIsRegisteredFromToken = async () => {
   try {
-    if (globalAuth.isAuthenticated && globalAuth.user) {
+    // Solo verificamos si el usuario está autenticado
+    if (isLoggedIn.value && globalAuth.user) {
       const userId = getUserIdFromToken();
-      
+
       if (!userId) {
         console.error("No se pudo obtener el ID del token");
         isLoading.value = false;
         return;
       }
-      
+
       const userSeries = await fetchUserSeries(userId);
       isUserRegistered.value = userSeries.some(serie => {
         const serieId = serie._id?.toString() || serie?.toString();
         const propId = props.id?.toString();
         return serieId === propId;
       });
+    } else {
+      // Si no está autenticado, claramente no está registrado
+      isUserRegistered.value = false;
     }
   } catch (error) {
     console.error("Error verificando si la serie está registrada:", error);
@@ -83,7 +97,7 @@ const checkIfSerieIsRegisteredFromToken = async () => {
 
 const fetchUserSeries = async (userId) => {
   if (!userId) return [];
-  
+
   try {
     const token = localStorage.getItem("jwt");
     if (!token) return [];
@@ -105,11 +119,13 @@ const fetchUserSeries = async (userId) => {
 };
 
 const handleButtonClick = () => {
-  if (!globalAuth.isAuthenticated) {
+  // Si no está autenticado, redirigir al login
+  if (!isLoggedIn.value) {
     router.push("/login");
     return;
   }
-  
+
+  // Si ya está autenticado, manejar registro/eliminación
   if (isUserRegistered.value) {
     emit("unregister", props.id);
     isUserRegistered.value = false;
@@ -119,11 +135,13 @@ const handleButtonClick = () => {
   }
 };
 
-// Función para determinar el texto del botón
 const getButtonText = () => {
-  if (!globalAuth.isAuthenticated) {
-    return "Registrarse";
+  // Si no está autenticado
+  if (!isLoggedIn.value) {
+    return "Iniciar sesión para añadirla";
   }
+  
+  // Si está autenticado, verificar si está registrada
   return isUserRegistered.value ? "Eliminar de mi perfil" : "Añadir a mi perfil";
 };
 </script>
@@ -142,21 +160,23 @@ const getButtonText = () => {
         <button 
           @click="handleButtonClick" 
           :class="{
-            'register-btn': !isUserRegistered,
-            'unregister-btn': isUserRegistered,
-            'auth-btn': !globalAuth.isAuthenticated
+            'register-btn': !isUserRegistered && isLoggedIn,
+            'unregister-btn': isUserRegistered && isLoggedIn,
+            'auth-btn': !isLoggedIn
           }"
         >
           {{ getButtonText() }}
         </button>
-        
-        <!-- <router-link 
+
+        <!--
+        <router-link 
           v-if="!hideDetailsButton" 
           :to="{ name: 'serie-details', params: { id: id }}" 
           class="detalles-btn"
         >
           Ver detalles completos
-        </router-link> -->
+        </router-link>
+        -->
       </div>
     </div>
   </div>
@@ -284,3 +304,4 @@ const getButtonText = () => {
   gap: 0.5rem;
 }
 </style>
+

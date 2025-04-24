@@ -1,0 +1,6 @@
+{
+    "conventionalCommits.scopes": [
+        "fix other errors",
+        "auth"
+    ]
+}

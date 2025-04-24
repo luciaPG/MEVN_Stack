@@ -14,14 +14,21 @@ const errorMessages = {
 
 // Create the reactive auth state
 export const globalAuth = reactive({
-  isAuthenticated: false,
+  _isAuthenticated: false,  // Internal property
   user: null,
   token: null,
   lastError: null,
   
-  // Add utility methods for authentication
+
+  
+  // This allows calling it as a function too
+  isAuthenticated() {
+    return this._isAuthenticated;
+  },
+  
+  // Keep original method for backward compatibility
   getIsAuthenticated() {
-    return this.isAuthenticated;
+    return this._isAuthenticated;
   },
   
   getUserId() {
@@ -68,7 +75,7 @@ export const globalAuth = reactive({
 
       this.setUser(user);
       this.setToken(token);
-      this.isAuthenticated = true;
+      this._isAuthenticated = true;
 
       return user;
     } catch (error) {
@@ -110,7 +117,7 @@ export const globalAuth = reactive({
       if (userData) {
         try {
           this.user = JSON.parse(userData);
-          this.isAuthenticated = true;
+          this._isAuthenticated = true;
         } catch (e) {
           console.error('Failed to parse user data', e);
           this.logout();
@@ -124,7 +131,7 @@ export const globalAuth = reactive({
 
   setUser(user) {
     this.user = user;
-    this.isAuthenticated = !!user;
+    this._isAuthenticated = !!user;
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
     } else {
@@ -140,7 +147,7 @@ export const globalAuth = reactive({
   logout() {
     this.user = null;
     this.token = null;
-    this.isAuthenticated = false;
+    this._isAuthenticated = false;
     localStorage.removeItem('jwt');
     localStorage.removeItem('user');
   },
