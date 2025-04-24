@@ -2,7 +2,9 @@
   <div class="editar-serie-view">
     <div class="header">
       <h1>Editar Serie</h1>
-      <router-link to="/series" class="back-link">← Volver al listado</router-link>
+      <router-link to="/series" class="back-link"
+        >← Volver al listado</router-link
+      >
     </div>
 
     <form @submit.prevent="handleSubmit" class="serie-form">
