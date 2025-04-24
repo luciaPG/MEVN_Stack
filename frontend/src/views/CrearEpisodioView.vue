@@ -106,13 +106,21 @@ const episodio = ref({
   temporada: "",
 });
 
-onMounted(() => {
+onMounted(async () => {
   const pathParts = route.path.split("/");
   temporadaId.value = pathParts[2];
-
-  serieId.value = route.params.serieId;
-
   episodio.value.temporada = temporadaId.value;
+
+  try {
+    const response = await axios.get(
+      `http://localhost:5000/api/temporadas/${temporadaId.value}`
+    );
+    serieId.value = response.data.serie._id;
+  } catch (error) {
+    console.error("Error al obtener la serie:", error);
+    errorMessage.value =
+      "Ocurrió un error al obtener la serie. Por favor intenta nuevamente.";
+  }
 });
 
 const handleSubmit = async () => {
