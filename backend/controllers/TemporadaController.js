@@ -5,6 +5,9 @@ const Episodio = require('../models/Episodio');
 // CREATE
 const createTemporada = async (req, res) => {
     try {
+        if(!req.body.serie || !req.body.numeroTemporada) {
+            return res.status(400).json({ message: "Faltan datos obligatorios" });
+        }
         const existingTemporada = await Temporada.findOne({ serie: req.body.serie, numeroTemporada: req.body.numeroTemporada });
         if (existingTemporada) {
             return res.status(400).json({ message: "Ya existe una temporada con ese número para esta serie" });
@@ -13,8 +16,14 @@ const createTemporada = async (req, res) => {
         if (!serieExistente) {
             return res.status(404).json({ message: "Serie no encontrada" });
         }
-        const nuevaTemporada = new Temporada(req.body);
+        const nuevaTemporada = new Temporada({
+            numeroTemporada: req.body.numeroTemporada,
+            serie: req.body.serie,
+            episodios: [],
+        });
         await nuevaTemporada.save();
+        serieExistente.temporadas.push(nuevaTemporada._id);
+        await serieExistente.save();
         res.status(201).json(nuevaTemporada);
     } catch (error) {
         res.status(500).json({ message: "Error al crear la temporada" });

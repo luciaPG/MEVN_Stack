@@ -2,26 +2,44 @@
   <div class="crear-temporada-view">
     <div class="header">
       <h1>Crear Nueva Temporada</h1>
+      <router-link :to="`/series/${serieId}`" class="back-link">
+        ← Volver a la serie
+      </router-link>
     </div>
 
     <form @submit.prevent="handleSubmit" class="temporada-form">
+      <div v-if="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
       <div class="form-group">
         <label for="numeroTemporada">Número de Temporada*</label>
         <input
           type="number"
           id="numeroTemporada"
-          v-model="temporada.numeroTemporada"
+          v-model.number="temporada.numeroTemporada"
           required
           min="1"
           class="form-input"
+          :disabled="isSubmitting"
         />
+        <small class="hint">Ingrese un número mayor a 0</small>
       </div>
 
       <div class="form-actions">
-        <button type="button" @click="resetForm" class="cancel-btn">
+        <button
+          type="button"
+          @click="resetForm"
+          class="cancel-btn"
+          :disabled="isSubmitting"
+        >
           Limpiar
         </button>
-        <button type="submit" class="submit-btn" :disabled="isSubmitting">
+        <button
+          type="submit"
+          class="submit-btn"
+          :disabled="isSubmitting || !temporada.numeroTemporada"
+        >
           <span v-if="!isSubmitting">Crear Temporada</span>
           <span v-else class="loading-spinner"></span>
         </button>
@@ -38,33 +56,56 @@ import axios from "axios";
 const route = useRoute();
 const router = useRouter();
 const isSubmitting = ref(false);
+const errorMessage = ref("");
 const serieId = ref("");
 
 const temporada = ref({
-  numeroTemporada: "",
+  numeroTemporada: null,
   serie: "",
 });
 
 onMounted(() => {
-  serieId.value = route.params.serieId;
+  const pathParts = route.path.split("/");
+  serieId.value = pathParts[2];
   temporada.value.serie = serieId.value;
 });
 
 const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
+    errorMessage.value = "";
+    if (
+      !temporada.value.numeroTemporada ||
+      temporada.value.numeroTemporada < 1 ||
+      temporada.value.numeroTemporada > 1000
+    ) {
+      errorMessage.value =
+        "El número de temporada debe ser mayor a 0 y menor que 1000";
+      return;
+    }
 
-    await axios.post("http://localhost:5000/api/temporadas", {
-      numeroTemporada: parseInt(temporada.value.numeroTemporada),
+    const response = await axios.post("http://localhost:5000/api/temporadas", {
+      numeroTemporada: temporada.value.numeroTemporada,
       serie: serieId.value,
     });
 
-    router.push(`/series/${serieId.value}`);
+    if (response.data && response.data._id) {
+      router.push(`/detalles/${serieId.value}`);
+    } else {
+      throw new Error("No se recibió una respuesta válida del servidor");
+    }
   } catch (error) {
     console.error("Error al crear la temporada:", error);
-    alert(
-      "Ocurrió un error al crear la temporada. Por favor intenta nuevamente."
-    );
+
+    if (error.response && error.response.data) {
+      errorMessage.value =
+        error.response.data.message ||
+        "Ocurrió un error al crear la temporada. Por favor intenta nuevamente.";
+    } else {
+      errorMessage.value =
+        error.message ||
+        "Ocurrió un error al conectar con el servidor. Verifica tu conexión.";
+    }
   } finally {
     isSubmitting.value = false;
   }
@@ -72,9 +113,10 @@ const handleSubmit = async () => {
 
 const resetForm = () => {
   temporada.value = {
-    numeroTemporada: "",
+    numeroTemporada: null,
     serie: serieId.value,
   };
+  errorMessage.value = "";
 };
 </script>
 
@@ -128,6 +170,13 @@ const resetForm = () => {
   color: #444;
 }
 
+.hint {
+  display: block;
+  margin-top: 0.25rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
 .form-input {
   width: 100%;
   padding: 0.75rem;
@@ -161,8 +210,13 @@ const resetForm = () => {
   transition: all 0.3s;
 }
 
-.cancel-btn:hover {
+.cancel-btn:hover:not(:disabled) {
   background: #f5f5f5;
+}
+
+.cancel-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .submit-btn {
@@ -205,6 +259,16 @@ const resetForm = () => {
   to {
     transform: rotate(360deg);
   }
+}
+
+.error-message {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
