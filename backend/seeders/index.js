@@ -22,13 +22,14 @@ const runSeeders = async () => {
     await seedTemporadas();
     await seedEpisodios();
 
-    await mongoose.disconnect();
-    console.log('Seeders completados');
-    process.exit(0);
+    if (require.main === module) {
+      await mongoose.connection.disconnect();
+      process.exit(0);
+    } 
   } catch (err) {
     console.error('Error en los seeders:', err);
     process.exit(1);
   }
 };
 
-runSeeders();
+module.exports = runSeeders;

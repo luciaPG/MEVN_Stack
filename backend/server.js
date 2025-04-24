@@ -10,6 +10,7 @@ const SerieRoutes = require('./routes/SerieRoutes');
 const TemporadaRoutes = require('./routes/TemporadaRoutes');
 const EpisodioRoutes = require('./routes/EpisodioRoutes');
 const ProgresoRoutes = require('./routes/ProgresoRoutes');
+const runSeeders = require('./seeders');
 
 const app = express();
 
@@ -22,6 +23,7 @@ mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
+.then(async () => { runSeeders(); })
 .then(() => console.log('Conectado a MongoDB'))
 .catch(err => console.error('Error de conexión a MongoDB:', err));
 
