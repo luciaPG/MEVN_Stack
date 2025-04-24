@@ -172,11 +172,21 @@ const eliminarSerie = async () => {
   }
 
   try {
-    await axios.delete(`http://localhost:5000/api/series/${serie.value._id}`);
-    router.push("/series");
+    const response = await axios.delete(
+      `http://localhost:5000/api/series/${serie.value._id}`
+    );
+
+    if (response.status === 200 || response.status === 204) {
+      router.push("/series");
+    } else {
+      throw new Error("No se recibió una respuesta válida del servidor");
+    }
   } catch (error) {
-    console.error("Error al eliminar la serie:", error);
-    alert("No se pudo eliminar la serie");
+    console.error("Error al eliminar la serie:", {
+      error: error.message,
+      response: error.response?.data,
+    });
+    alert("Ocurrió un error al eliminar la serie");
   }
 };
 

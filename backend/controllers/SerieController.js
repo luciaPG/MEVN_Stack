@@ -1,4 +1,6 @@
 const Serie = require("../models/Serie");
+const Temporada = require("../models/Temporada");
+const Episodio = require("../models/Episodio");
 
 // CREATE
 const createSerie = async (req, res) => {
