@@ -1,13 +1,11 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { defineProps, defineEmits, onMounted, ref, watch, computed } from "vue";
+import { defineProps, onMounted, ref, watch, computed } from "vue";
 import { globalAuth } from "../store/AuthContext";
 import axios from "axios";
 
 const router = useRouter();
-const emit = defineEmits(["register", "unregister"]);
 const isUserRegistered = ref(false);
-const isLoading = ref(true);
 
 // This handles both cases where isAuthenticated is property or function
 const isLoggedIn = computed(() => {
@@ -43,57 +41,73 @@ watch(() => props.isRegistered, (newValue) => {
 
 onMounted(() => {
   isUserRegistered.value = props.isRegistered;
-  checkIfSerieIsRegisteredFromToken();
+  fetchUserSeries();
+  checkIfSerieIsRegistered();
 });
 
-const getUserIdFromToken = () => {
-  const token = localStorage.getItem("jwt");
-  if (!token) return null;
-
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    const decoded = JSON.parse(jsonPayload);
-    const userId = decoded.id || decoded._id || decoded.sub || decoded.userId;
-    return userId;
-  } catch (error) {
-    console.error("Error decodificando token:", error);
-    return null;
-  }
+const checkIfSerieIsRegistered = async () => {
+  if (!isLoggedIn.value) return;
+  const userId = globalAuth.getUserId();
+  const userSeries = await fetchUserSeries(userId);
+  isUserRegistered.value = userSeries.some(s => s._id === props.id);
 };
 
-const checkIfSerieIsRegisteredFromToken = async () => {
+const registerSerie = async (serieId) => {
   try {
-    // Solo verificamos si el usuario está autenticado
-    if (isLoggedIn.value && globalAuth.user) {
-      const userId = getUserIdFromToken();
+    const userId = globalAuth.getUserId();
+    const token = localStorage.getItem("jwt");
 
-      if (!userId) {
-        console.error("No se pudo obtener el ID del token");
-        isLoading.value = false;
-        return;
+    // Debugging logs
+    console.log("Registering serie:", {
+      userId,
+      serieId,
+      endpoint: "/api/series/user"
+    });
+
+    const response = await axios.post(
+      "http://localhost:5000/api/series/user", // Correct endpoint
+      { userId, serieId }, // Data in body
+      {
+        headers: { Authorization: `Bearer ${token}` }
       }
+    );
 
-      const userSeries = await fetchUserSeries(userId);
-      isUserRegistered.value = userSeries.some(serie => {
-        const serieId = serie._id?.toString() || serie?.toString();
-        const propId = props.id?.toString();
-        return serieId === propId;
-      });
-    } else {
-      // Si no está autenticado, claramente no está registrado
+    console.log("Registration successful:", response.data);
+    isUserRegistered.value = true;
+  } catch (error) {
+    console.error("Registration failed:", {
+      error: error.response?.data || error.message,
+      config: error.config
+    });
+  }
+};
+const unregisterSerie = async (serieId) => {
+  try {
+    const userId = globalAuth.getUserId();
+    const token = localStorage.getItem("jwt");
+
+    if (!userId || !token) {
+      throw new Error("Authentication required");
+    }
+
+    const response = await axios.delete(
+      `http://localhost:5000/api/series/user/${userId}/${serieId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status < 500,
+      }
+    );
+
+    if (response.status === 200) {
       isUserRegistered.value = false;
+    } else {
+      console.error("Unregistration failed:", response.data);
     }
   } catch (error) {
-    console.error("Error verificando si la serie está registrada:", error);
-  } finally {
-    isLoading.value = false;
+    console.error("Error in unregisterSerie:", error.message);
   }
 };
+
 
 const fetchUserSeries = async (userId) => {
   if (!userId) return [];
@@ -118,20 +132,16 @@ const fetchUserSeries = async (userId) => {
   }
 };
 
+
 const handleButtonClick = () => {
-  // Si no está autenticado, redirigir al login
   if (!isLoggedIn.value) {
     router.push("/login");
     return;
   }
-
-  // Si ya está autenticado, manejar registro/eliminación
   if (isUserRegistered.value) {
-    emit("unregister", props.id);
-    isUserRegistered.value = false;
+    unregisterSerie(props.id);
   } else {
-    emit("register", props.id);
-    isUserRegistered.value = true;
+    registerSerie(props.id);
   }
 };
 
@@ -155,8 +165,7 @@ const getButtonText = () => {
     <p class="serie-sinopsis">{{ sinopsis }}</p>
 
     <div class="button-container">
-      <div v-if="isLoading" class="loading-indicator">Cargando...</div>
-      <div v-else class="actions-container">
+      <div class="actions-container">
         <button 
           @click="handleButtonClick" 
           :class="{
@@ -167,16 +176,6 @@ const getButtonText = () => {
         >
           {{ getButtonText() }}
         </button>
-
-        <!--
-        <router-link 
-          v-if="!hideDetailsButton" 
-          :to="{ name: 'serie-details', params: { id: id }}" 
-          class="detalles-btn"
-        >
-          Ver detalles completos
-        </router-link>
-        -->
       </div>
     </div>
   </div>
