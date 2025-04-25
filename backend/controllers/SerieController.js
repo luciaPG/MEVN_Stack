@@ -64,19 +64,22 @@ const getSeriesByUserId = async (req, res) => {
 
 const registerSeriesToUser = async (req, res) => {
     try {
-        const { userId, serieId } = req.body;
+        const { serieId,userId  } = req.body;
         
         if (!userId || !serieId) {
             return res.status(400).json({ message: "Se requiere ID de usuario y serie" });
         }
 
         const user = await User.findById(userId);
+        console.log(user);
         if (!user) {
+            console.error('Usuario no encontrado:', userId);
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
         const serie = await Serie.findById(serieId);
         if (!serie) {
+            console.error('Serie no encontrada:', serieId);
             return res.status(404).json({ message: "Serie no encontrada" });
         }
 
@@ -91,7 +94,7 @@ const registerSeriesToUser = async (req, res) => {
         user.registeredSeries.push(serieId);
         await user.save();
 
-        res.status(200).json({ message: "Serie registrada correctamente en tu perfil" });
+        res.status(200).json({ message: "Serie registrada correctamente en tu perfilllllllllllllllllll" });
     } catch (error) {
         console.error('Error al registrar serie para usuario:', error);
         res.status(500).json({ message: "Error al registrar serie" });
@@ -102,7 +105,7 @@ const registerSeriesToUser = async (req, res) => {
 // UNREGISTER SERIES FROM USER PROFILE
 const unregisterSeriesFromUser = async (req, res) => {
     try {
-        const { userId, serieId } = req.params;
+         const { serieId, userId } = req.params;
 
         const user = await User.findById(userId);
         if (!user) {

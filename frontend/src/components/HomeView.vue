@@ -126,6 +126,7 @@ onMounted(() => {
 
 .page-title {
   font-size: 2rem;
+  margin-top: 5rem;
   color: #333;
   margin-bottom: 2rem;
   text-align: center;

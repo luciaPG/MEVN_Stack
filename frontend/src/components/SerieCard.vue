@@ -30,7 +30,10 @@
 
 <script setup>
 // Import the functions that ESLint is complaining about
-import { defineProps, defineEmits } from 'vue';
+
+import { defineProps, computed, defineEmits } from "vue";
+import { globalAuth } from "../store/AuthContext";
+import axios from "axios";
 
 const props = defineProps({
   id: String,
@@ -54,12 +57,11 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits([
-  "eliminar"
-]);
+const emit = defineEmits(['serie-eliminada']);
 
-import { computed } from "vue";
-
+const isUserRegistered = computed(() => {
+  return globalAuth.isAuthenticated();
+});
 
 const generoArray = computed(() => {
   if (Array.isArray(props.genero)) {
@@ -79,7 +81,36 @@ const progressClass = computed(() => {
 
 const confirmDelete = () => {
   if (confirm(`¿Estás seguro de que deseas eliminar la serie "${props.nombre}"?`)) {
-    emit("eliminar", props.id);
+    console.log(props.id);
+    unregisterSerie(props.id);
+  }
+};
+
+const unregisterSerie = async (serieId) => {
+  try {
+    const userId = globalAuth.getUserId();
+    const token = localStorage.getItem("jwt");
+
+    if (!userId || !token) {
+      throw new Error("Authentication required");
+    }
+
+    const response = await axios.delete(
+      `http://localhost:5000/api/series/user/${userId}/${serieId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status < 500,
+      }
+    );
+
+    if (response.status === 200) {
+      isUserRegistered.value = false;
+      emit('serie-eliminada', serieId);
+    } else {
+      console.error("Unregistration failed:", response.data);
+    }
+  } catch (error) {
+    console.error("Error in unregisterSerie:", error.message);
   }
 };
 </script>

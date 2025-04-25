@@ -107,9 +107,7 @@ const userName = computed(() => {
 
 const userProfileImage = computed(() => {
   if (imageError.value || !authState.user?.profileImage) {
-    const hash = userName.value ? userName.value.charCodeAt(0) % 100 : 44;
-    const gender = hash % 2 === 0 ? "men" : "women";
-    return `https://randomuser.me/api/portraits/${gender}/${hash}.jpg`;
+    return require("../assets/profile.jpeg");
   }
   return authState.user.profileImage;
 });
@@ -119,10 +117,8 @@ const handleImageError = () => {
 };
 
 const navItems = [
-  { name: "Inicio", path: "/" },
-  { name: "Series", path: "/series" },
-  { name: "Descubrir", path: "/discover" },
-  { name: "Calendario", path: "/calendar" },
+  { name: "Series Populares", path: "/" },
+  { name: "Mis Series", path: "/series" },
 ];
 
 const toggleDropdown = () => {
@@ -162,8 +158,6 @@ const logout = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1.5rem;
-  margin: 0 auto;
 }
 
 .flex-grow {
@@ -195,6 +189,7 @@ const logout = () => {
 
 .menu {
   display: flex;
+  justify-content: space-;
   gap: 1rem;
   margin-left: 2rem;
 }
@@ -237,9 +232,8 @@ const logout = () => {
 .actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 1.5rem;
-  margin-left: auto;
-  padding-right: 1rem;
 }
 
 .action-btn {
@@ -250,7 +244,6 @@ const logout = () => {
   cursor: pointer;
   transition: color 0.3s ease;
   border-radius: 50%;
-  padding: 0.5rem;
 }
 
 .action-btn:hover {
@@ -264,7 +257,6 @@ const logout = () => {
 
 .profile-btn {
   display: flex;
-  align-items: center;
   background: none;
   border: none;
   color: #ffffff;
@@ -276,10 +268,11 @@ const logout = () => {
 }
 
 .profile-img {
-  width: 55px;
-  height: 55px;
+  width: 40px;
+  height: 40px;
+  align-self: flex-end;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.7);
+  border: 2px solid rgba(147, 64, 28, 0.456);
   transition: all 0.3s ease;
   object-fit: cover;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
