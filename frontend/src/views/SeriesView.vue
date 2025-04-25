@@ -122,16 +122,19 @@ const handleSerieEliminada = async () => {
 
 <style scoped>
 .series-view {
+  margin-top: 15rem;
   padding: 2rem;
   text-align: center;
   max-width: 1200px;
+ 
   margin: 0 auto;
 }
 
 h1 {
   font-size: 2.5rem;
+  margin-top: 4rem;
   color: #333;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .tabs {
@@ -141,26 +144,6 @@ h1 {
   gap: 0.5rem;
 }
 
-.tab-btn {
-  padding: 0.75rem 1.5rem;
-  background-color: #f0f0f0;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  color: #555;
-  transition: all 0.3s;
-}
-
-.tab-btn:hover {
-  background-color: #e0e0e0;
-}
-
-.tab-btn.active {
-  background: linear-gradient(135deg, #8c00d7 0%, #6a00b8 100%);
-  color: white;
-  font-weight: 600;
-}
 
 .create-btn-container {
   margin-bottom: 2rem;

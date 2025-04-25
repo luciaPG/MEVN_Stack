@@ -104,7 +104,7 @@ const handleLogin = async () => {
     }
 
     console.log("Login successful, redirecting to dashboard");
-    router.push("/dashboard");
+    router.push("/series");
   } catch (err) {
     console.error("Login error:", err);
     error.value = err.response?.data?.message || "Error al iniciar sesión";
