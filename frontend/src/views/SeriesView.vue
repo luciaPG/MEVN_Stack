@@ -14,7 +14,7 @@
       <SerieCard v-for="serie in filteredSeries" :key="serie._id" :id="serie._id" :nombre="serie.nombre"
         :sinopsis="serie.sinopsis" :genero="serie.genero" :progreso="serie.progreso"
         :episodiosVistos="serie.episodiosVistos" :totalEpisodios="serie.totalEpisodios"
-        @eliminar="handleEliminarSerie" />
+        @eliminar="handleEliminarSerie" @serie-eliminada="handleSerieEliminada" />
     </div>
 
     <div v-else class="no-series">
@@ -58,31 +58,16 @@ const filteredSeries = computed(() => {
   return series.value;
 });
 
-onMounted(async () => {
+const loadSeries = async () => {
   loading.value = true;
-
   try {
-    // Asegurarse de que el usuario esté cargado antes de hacer la petición
-    await globalAuth.loadUserData();
-
     const userId = globalAuth.getUserId();
     if (!userId) {
       console.error("No se pudo obtener el ID del usuario.");
       return;
     }
 
-    // Debug: Check authentication state
-    console.log("Auth State:", {
-      isAuthenticated: globalAuth.isAuthenticated,
-      userId: globalAuth.getUserId(),
-      token: globalAuth.token ? 'Token exists' : 'No token'
-    });
-
-    // Get auth headers with token
     const headers = globalAuth.getAuthHeaders();
-    console.log("Using headers:", headers);
-
-    // Make the API request with auth headers
     const res = await axios.get(`http://localhost:5000/api/progreso/series/${userId}`, {
       headers: headers
     });
@@ -93,29 +78,19 @@ onMounted(async () => {
         ? Math.round((serie.episodiosVistos / serie.totalEpisodios) * 100)
         : 0
     }));
-
-    console.log("Series con progreso:", series.value);
   } catch (err) {
     console.error("Error al obtener las series:", err);
-    
-    // Check specific error details
-    if (err.response) {
-      console.error("Response status:", err.response.status);
-      console.error("Response data:", err.response.data);
-      
-      // If token expired or invalid, try to reload user data and retry
-      if (err.response.status === 401) {
-        console.log("Token expired or invalid. Trying to refresh authentication...");
-        globalAuth.logout(); // Force logout to clear invalid token
-        alert("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
-        // Redirect to login page
-        window.location.href = '/login';
-      }
+    if (err.response?.status === 401) {
+      globalAuth.logout();
+      alert("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
+      window.location.href = '/login';
     }
   } finally {
     loading.value = false;
   }
-});
+};
+
+onMounted(loadSeries);
 
 const handleEliminarSerie = async (serieId) => {
   try {
@@ -132,6 +107,15 @@ const handleEliminarSerie = async (serieId) => {
   } catch (error) {
     console.error("Error al eliminar la serie:", error);
     alert("No se pudo eliminar la serie");
+  }
+};
+
+const handleSerieEliminada = async () => {
+  try {
+    // Recargar las series
+    await loadSeries();
+  } catch (error) {
+    console.error("Error al recargar las series:", error);
   }
 };
 </script>

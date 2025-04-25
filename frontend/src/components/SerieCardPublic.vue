@@ -43,6 +43,7 @@ onMounted(() => {
   isUserRegistered.value = props.isRegistered;
   fetchUserSeries();
   checkIfSerieIsRegistered();
+  
 });
 
 const checkIfSerieIsRegistered = async () => {
@@ -56,6 +57,7 @@ const registerSerie = async (serieId) => {
   try {
     const userId = globalAuth.getUserId();
     const token = localStorage.getItem("jwt");
+    console.log(token);
 
     // Debugging logs
     console.log("Registering serie:", {
@@ -81,6 +83,7 @@ const registerSerie = async (serieId) => {
     });
   }
 };
+
 const unregisterSerie = async (serieId) => {
   try {
     const userId = globalAuth.getUserId();

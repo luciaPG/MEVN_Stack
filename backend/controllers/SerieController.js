@@ -71,6 +71,7 @@ const registerSeriesToUser = async (req, res) => {
         }
 
         const user = await User.findById(userId);
+        console.log(user);
         if (!user) {
             console.error('Usuario no encontrado:', userId);
             return res.status(404).json({ message: "Usuario no encontrado" });
@@ -104,7 +105,7 @@ const registerSeriesToUser = async (req, res) => {
 // UNREGISTER SERIES FROM USER PROFILE
 const unregisterSeriesFromUser = async (req, res) => {
     try {
-         const { userId, serieId } = req.body;
+         const { serieId, userId } = req.params;
 
         const user = await User.findById(userId);
         if (!user) {
