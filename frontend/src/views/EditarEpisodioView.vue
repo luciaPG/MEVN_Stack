@@ -202,6 +202,7 @@ const cancelEdit = () => {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
+  padding-top: 80px;
 }
 
 .header {
@@ -358,6 +359,7 @@ const cancelEdit = () => {
 @media (max-width: 768px) {
   .editar-episodio-view {
     padding: 1.5rem 1rem;
+    padding-top: 80px;
   }
 
   .episodio-form {
