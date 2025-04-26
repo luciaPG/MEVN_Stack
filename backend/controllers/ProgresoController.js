@@ -44,118 +44,61 @@ const obtenerTotalEpisodiosSerie = async (serieId) => {
     return totalEpisodios;
 };
 
-// OBTENER SERIES CON PROGRESO PARA UN USUARIO
 const getSeriesWithProgress = async (req, res) => {
     try {
         const userId = req.params.userId;
         
-        console.log("Procesando solicitud para obtener series con progreso del usuario:", userId);
-        
-        // Check if userId is valid ObjectId
         if (!mongoose.Types.ObjectId.isValid(userId)) {
-            console.log("ID de usuario inválido:", userId);
             return res.status(400).json({ message: 'ID de usuario inválido' });
         }
         
-        // Get user with its registeredSeries
-        const user = await User.findById(userId);
+        // Obtener todas las series que el usuario tiene en su lista (registeredSeries)
+        const user = await User.findById(userId).select('registeredSeries');
         
         if (!user) {
-            console.log("Usuario no encontrado");
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }
         
-        console.log("Usuario encontrado:", user._id.toString());
-        console.log("Registered Series array:", Array.isArray(user.registeredSeries));
-        console.log("Registered Series count:", user.registeredSeries ? user.registeredSeries.length : 0);
-        
-        // Simple fallback - if no registered series, return all series
-        // In a production app, you might want to return an empty array instead
+        // Si no tiene series registradas, devolver array vacío
         if (!user.registeredSeries || user.registeredSeries.length === 0) {
-            console.log("No hay series registradas para este usuario. Mostrando todas las series disponibles.");
-            const allSeries = await Serie.find().select('nombre sinopsis genero').lean();
-            
-            // Process and return all series
-            const results = [];
-            
-            for (const serie of allSeries) {
-                // Get temporadas for this serie
-                const temporadas = await Temporada.find({ serie: serie._id });
-                const temporadaIds = temporadas.map(t => t._id);
-                
-                // Count episodes
-                const totalEpisodios = temporadaIds.length > 0 ?
-                    await Episodio.countDocuments({ temporada: { $in: temporadaIds } }) : 0;
-                
-                // Count watched episodes for this user
-                const episodiosVistos = await Progreso.countDocuments({
-                    usuario: userId,
-                    serie: serie._id,
-                    visto: true
-                });
-                
-                // Add to results
-                results.push({
-                    _id: serie._id,
-                    nombre: serie.nombre,
-                    sinopsis: serie.sinopsis || "Sin descripción",
-                    genero: serie.genero || "Sin género",
-                    totalEpisodios,
-                    episodiosVistos
-                });
-            }
-            
-            return res.json(results);
-        }
-        
-        // If we get here, user has registered series
-        console.log("Series registradas:", user.registeredSeries.map(id => id.toString()));
-        
-        // Get details of registered series
-        const seriesData = await Serie.find({
-            _id: { $in: user.registeredSeries }
-        }).select('nombre sinopsis genero').lean();
-        
-        console.log("Series encontradas en BD:", seriesData.length);
-        
-        if (!seriesData || seriesData.length === 0) {
-            console.log("No se encontraron las series registradas en la base de datos");
             return res.json([]);
         }
         
-        // Process each registered series
-        const results = [];
+        // Obtener solo series que existen (no eliminadas)
+        const existingSeries = await Serie.find({
+            _id: { $in: user.registeredSeries }
+        }).select('nombre sinopsis genero');
         
-        for (const serie of seriesData) {
-            try {
-                // Get temporadas for this serie
-                const temporadas = await Temporada.find({ serie: serie._id });
-                const temporadaIds = temporadas.map(t => t._id);
-                
-                // Count episodes
-                const totalEpisodios = temporadaIds.length > 0 ?
-                    await Episodio.countDocuments({ temporada: { $in: temporadaIds } }) : 0;
-                
-                // Count watched episodes for this user
-                const episodiosVistos = await Progreso.countDocuments({
-                    usuario: userId,
-                    serie: serie._id,
-                    visto: true
-                });
-                
-                // Add to results
-                results.push({
-                    _id: serie._id,
-                    nombre: serie.nombre,
-                    sinopsis: serie.sinopsis || "Sin descripción",
-                    genero: serie.genero || "Sin género",
-                    totalEpisodios,
-                    episodiosVistos
-                });
-            } catch (error) {
-                console.error(`Error procesando serie ${serie._id}:`, error);
-            }
-        }
+        // Procesar cada serie para obtener progreso
+        const results = await Promise.all(existingSeries.map(async (serie) => {
+            // Obtener temporadas de la serie
+            const temporadas = await Temporada.find({ serie: serie._id });
+            const temporadaIds = temporadas.map(t => t._id);
+            
+            // Contar episodios totales
+            const totalEpisodios = temporadaIds.length > 0 
+                ? await Episodio.countDocuments({ temporada: { $in: temporadaIds } }) 
+                : 0;
+            
+            // Contar episodios vistos
+            const episodiosVistos = await Progreso.countDocuments({
+                usuario: userId,
+                serie: serie._id,
+                visto: true
+            });
+            
+            return {
+                _id: serie._id,
+                nombre: serie.nombre,
+                sinopsis: serie.sinopsis || "Sin descripción",
+                genero: serie.genero || "Sin género",
+                totalEpisodios,
+                episodiosVistos,
+                progreso: totalEpisodios > 0 
+                    ? Math.round((episodiosVistos / totalEpisodios) * 100) 
+                    : 0
+            };
+        }));
         
         return res.json(results);
         
