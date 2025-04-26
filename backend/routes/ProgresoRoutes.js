@@ -22,6 +22,8 @@ router.get('/usuario/:userId/series', progresoController.getSeriesByUser); // Up
 // Additional routes
 router.get('/usuario/:userId/series-registradas', progresoController.getUserSeries);
 router.get('/usuario/:userId/serie/:serieId/progreso', progresoController.getSerieProgress);
+router.get('/usuario/:userId/serie/:serieId', progresoController.getProgresoByUserAndSerie);
+router.get('/usuario/:userId/episodio/:episodioId', progresoController.getProgresoByUserAndEpisode);
 
 // Eliminar progreso
 router.delete('/:id', progresoController.deleteProgreso);

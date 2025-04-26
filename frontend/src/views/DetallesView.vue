@@ -38,7 +38,7 @@
             <div>
               <h2>Temporada {{ temporada.numeroTemporada }}</h2>
               <p class="temporada-info">
-                {{ temporada.episodios.length }} episodios
+                {{ temporada.episodios?.length || 0 }} episodios
               </p>
             </div>
             <div class="temporada-actions">
@@ -69,15 +69,15 @@
           <div v-else class="episodios-list-vertical">
             <EpisodioCard
               v-for="episodio in episodiosOrdenados(temporada.episodios)"
-              :key="episodio._id"
+              :key="episodio._id || episodio.id"
               :nombre="episodio.nombre"
               :sinopsis="episodio.sinopsis"
               :numeroEpisodio="episodio.numeroEpisodio"
               :fechaEstreno="episodio.fechaEstreno"
-              :id="episodio._id"
-              :visto="esEpisodioVisto(episodio._id)"
+              :id="episodio._id || episodio.id"
+              :visto="esEpisodioVisto(episodio._id || episodio.id)"
               @eliminar="eliminarEpisodio"
-              @actualizar-visto="actualizarEstadoVisto"
+              @actualizar-visto="toggleEpisodioVisto"
             />
           </div>
 
@@ -112,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import EpisodioCard from "@/components/EpisodioCard.vue";
@@ -123,19 +123,19 @@ const router = useRouter();
 const serie = ref(null);
 const temporadas = ref([]);
 const loading = ref(true);
-const progresos = ref([]);
+const episodiosVistos = reactive({});
 
 const isAuthenticated = computed(() => globalAuth && globalAuth.isAuthenticated);
 const authUser = computed(() => globalAuth && globalAuth.user);
 
 const temporadasOrdenadas = computed(() => {
-  return [...temporadas.value].sort(
+  return [...(temporadas.value || [])].sort(
     (a, b) => a.numeroTemporada - b.numeroTemporada
   );
 });
 
 const episodiosOrdenados = (episodios) => {
-  return [...episodios].sort((a, b) => a.numeroEpisodio - b.numeroEpisodio);
+  return [...(episodios || [])].sort((a, b) => a.numeroEpisodio - b.numeroEpisodio);
 };
 
 onMounted(async () => {
@@ -156,14 +156,22 @@ const cargarDatos = async () => {
     ]);
 
     serie.value = serieRes.data;
-    temporadas.value = tempRes.data;
+    temporadas.value = tempRes.data || [];
 
     // Cargar episodios para cada temporada
     for (const temporada of temporadas.value) {
-      const episodiosRes = await axios.get(
-        `http://localhost:5000/api/episodios/temporada/${temporada._id}`
-      );
-      temporada.episodios = episodiosRes.data;
+      try {
+        const episodiosRes = await axios.get(
+          `http://localhost:5000/api/episodios/temporada/${temporada._id}`
+        );
+        temporada.episodios = (episodiosRes.data || []).map(ep => ({
+          ...ep,
+          _id: ep._id || ep.id // Usar id como fallback
+        }));
+      } catch (error) {
+        console.error(`Error cargando episodios para temporada ${temporada._id}:`, error);
+        temporada.episodios = [];
+      }
     }
   } catch (err) {
     console.error("Error al cargar los detalles:", err);
@@ -173,50 +181,62 @@ const cargarDatos = async () => {
 };
 
 const cargarProgresos = async () => {
-  if (!authUser.value || !authUser.value._id) return;
+  if (!authUser.value?._id) return;
 
   try {
     const response = await axios.get(
-      `http://localhost:5000/api/progreso/usuario/${authUser.value._id}`,
+      `http://localhost:5000/api/progreso/usuario/${authUser.value._id}/serie/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwt")}`,
         },
       }
     );
-    progresos.value = response.data;
+    
+    // Limpiar el objeto reactivo
+    Object.keys(episodiosVistos).forEach(key => delete episodiosVistos[key]);
+    
+    // Asignar nuevos valores
+    response.data.forEach(progreso => {
+      const episodioId = progreso.episodio?._id || progreso.episodio;
+      if (episodioId) {
+        episodiosVistos[episodioId] = progreso.visto;
+      }
+    });
   } catch (error) {
     console.error("Error al cargar progresos:", error);
   }
 };
 
 const esEpisodioVisto = (episodioId) => {
-  if (!progresos.value.length) return false;
-
-  const progreso = progresos.value.find(
-    (p) => p.episodio._id === episodioId || p.episodio === episodioId
-  );
-
-  return progreso ? progreso.visto : false;
+  if (!episodioId) return false;
+  return !!episodiosVistos[episodioId];
 };
 
-const actualizarEstadoVisto = async ({ id, visto }) => {
-  if (!authUser.value || !authUser.value._id) {
+const toggleEpisodioVisto = async (episodioId) => {
+  if (!authUser.value?._id) {
     alert("Debes iniciar sesión para registrar tu progreso");
     return;
   }
 
   try {
-    // Buscar si ya existe un progreso para este episodio
-    const progresoExistente = progresos.value.find(
-      (p) => p.episodio._id === id || p.episodio === id
+    const nuevoEstado = !episodiosVistos[episodioId];
+    
+    // Verificar si ya existe un registro de progreso
+    const progresoExistente = await axios.get(
+      `http://localhost:5000/api/progreso/usuario/${authUser.value._id}/episodio/${episodioId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+        },
+      }
     );
 
-    if (progresoExistente) {
+    if (progresoExistente.data) {
       // Actualizar progreso existente
       await axios.put(
-        `http://localhost:5000/api/progreso/${progresoExistente._id}`,
-        { visto },
+        `http://localhost:5000/api/progreso/${progresoExistente.data._id}`,
+        { visto: nuevoEstado },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("jwt")}`,
@@ -228,9 +248,10 @@ const actualizarEstadoVisto = async ({ id, visto }) => {
       await axios.post(
         "http://localhost:5000/api/progreso",
         {
-          episodio: id,
-          visto,
+          episodio: episodioId,
+          visto: nuevoEstado,
           usuario: authUser.value._id,
+          serie: serie.value._id
         },
         {
           headers: {
@@ -240,8 +261,9 @@ const actualizarEstadoVisto = async ({ id, visto }) => {
       );
     }
 
-    // Recargar progresos
-    await cargarProgresos();
+    // Actualizar el estado local inmediatamente
+    episodiosVistos[episodioId] = nuevoEstado;
+    
   } catch (error) {
     console.error("Error al actualizar estado de episodio:", error);
     alert("No se pudo actualizar el estado del episodio");

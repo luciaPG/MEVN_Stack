@@ -367,6 +367,38 @@ const getSerieProgress = async (req, res) => {
     }
 };
 
+// OBTENER PROGRESO POR USUARIO Y SERIE
+const getProgresoByUserAndSerie = async (req, res) => {
+    try {
+        const { userId, serieId } = req.params;
+        
+        const progresos = await Progreso.find({
+            usuario: userId,
+            serie: serieId
+        }).select('episodio visto');
+        
+        res.json(progresos);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener el progreso" });
+    }
+};
+
+// OBTENER PROGRESO POR USUARIO Y EPISODIO
+const getProgresoByUserAndEpisode = async (req, res) => {
+    try {
+        const { userId, episodioId } = req.params;
+        
+        const progreso = await Progreso.findOne({
+            usuario: userId,
+            episodio: episodioId
+        });
+        
+        res.json(progreso || null);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener el progreso" });
+    }
+};
+
 module.exports = {
     createProgreso,
     getProgresoByUserId,
@@ -376,5 +408,7 @@ module.exports = {
     getSeriesByUser,
     getSeriesWithProgress,
     getUserSeries,
-    getSerieProgress
+    getSerieProgress,
+    getProgresoByUserAndSerie,
+    getProgresoByUserAndEpisode
 };
