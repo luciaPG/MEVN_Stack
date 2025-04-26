@@ -2,7 +2,7 @@
   <div class="crear-serie-view">
     <div class="header">
       <h1>Crear Nueva Serie</h1>
-      <router-link to="/series" class="back-link">
+      <router-link to="/" class="back-link">
         &larr; Volver al listado
       </router-link>
     </div>
