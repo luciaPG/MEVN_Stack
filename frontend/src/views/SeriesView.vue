@@ -2,19 +2,51 @@
   <div class="series-view">
     <h1>Tus Series Vistas</h1>
 
-    <div class="create-btn-container" v-if="isAdmin">
-      <router-link to="/series/nueva" class="create-btn">
-        <span class="icon">+</span> Crear Nueva Serie
-      </router-link>
+    <div class="actions-container">
+      <div class="create-btn-container" v-if="isAdmin">
+        <router-link to="/series/nueva" class="create-btn">
+          <span class="icon">+</span> Crear Nueva Serie
+        </router-link>
+      </div>
+      
+      <div class="tabs">
+        <button 
+          :class="['tab-btn', { active: activeTab === 'todas' }]" 
+          @click="activeTab = 'todas'"
+        >
+          Todas
+        </button>
+        <button 
+          :class="['tab-btn', { active: activeTab === 'progreso' }]" 
+          @click="activeTab = 'progreso'"
+        >
+          En Progreso
+        </button>
+        <button 
+          :class="['tab-btn', { active: activeTab === 'completadas' }]" 
+          @click="activeTab = 'completadas'"
+        >
+          Completadas
+        </button>
+      </div>
     </div>
 
     <div v-if="loading" class="loading">Cargando series...</div>
 
     <div v-else-if="filteredSeries.length > 0" class="series-grid">
-      <SerieCard v-for="serie in filteredSeries" :key="serie._id" :id="serie._id" :nombre="serie.nombre"
-        :sinopsis="serie.sinopsis" :genero="serie.genero" :progreso="serie.progreso"
-        :episodiosVistos="serie.episodiosVistos" :totalEpisodios="serie.totalEpisodios"
-        @eliminar="handleEliminarSerie" @serie-eliminada="handleSerieEliminada" />
+      <SerieCard 
+        v-for="serie in filteredSeries" 
+        :key="serie._id" 
+        :id="serie._id" 
+        :nombre="serie.nombre"
+        :sinopsis="serie.sinopsis" 
+        :genero="serie.genero" 
+        :progreso="serie.progreso"
+        :episodiosVistos="serie.episodiosVistos" 
+        :totalEpisodios="serie.totalEpisodios"
+        @eliminar="handleEliminarSerie" 
+        @serie-eliminada="handleSerieEliminada" 
+      />
     </div>
 
     <div v-else class="no-series">
@@ -94,7 +126,6 @@ onMounted(loadSeries);
 
 const handleEliminarSerie = async (serieId) => {
   try {
-    // Solo los administradores pueden eliminar series
     if (!isAdmin.value) {
       alert("No tienes permisos para eliminar series");
       return;
@@ -112,7 +143,6 @@ const handleEliminarSerie = async (serieId) => {
 
 const handleSerieEliminada = async () => {
   try {
-    // Recargar las series
     await loadSeries();
   } catch (error) {
     console.error("Error al recargar las series:", error);
@@ -122,11 +152,8 @@ const handleSerieEliminada = async () => {
 
 <style scoped>
 .series-view {
-  margin-top: 15rem;
   padding: 2rem;
-  text-align: center;
   max-width: 1200px;
- 
   margin: 0 auto;
 }
 
@@ -135,19 +162,20 @@ h1 {
   margin-top: 4rem;
   color: #333;
   margin-bottom: 2rem;
+  text-align: center;
 }
 
-.tabs {
+.actions-container {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
-
 
 .create-btn-container {
-  margin-bottom: 2rem;
-  text-align: center;
+  margin: 0;
 }
 
 .create-btn {
@@ -169,10 +197,34 @@ h1 {
   box-shadow: 0 4px 8px rgba(140, 0, 215, 0.2);
 }
 
-.series-grid {
+.tabs {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: 0.5rem;
+}
+
+.tab-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.tab-btn.active {
+  background-color: #8c00d7;
+  color: white;
+}
+
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
 }
 
@@ -216,5 +268,16 @@ h1 {
 
 .icon {
   font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .actions-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .tabs {
+    justify-content: center;
+  }
 }
 </style>
