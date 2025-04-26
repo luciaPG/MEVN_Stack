@@ -1,6 +1,6 @@
 <template>
   <div class="detalles-view">
-    <div class="action-buttons">
+    <div class="action-buttons" v-if="isAdmin">
       <button @click="eliminarSerie" class="delete-btn">
         <span class="icon">🗑️</span> Eliminar Serie
       </button>
@@ -41,7 +41,7 @@
                 {{ temporada.episodios?.length || 0 }} episodios
               </p>
             </div>
-            <div class="temporada-actions">
+            <div class="temporada-actions" v-if="isAdmin">
               <button
                 @click="eliminarTemporada(temporada._id)"
                 class="small-delete-btn"
@@ -78,10 +78,11 @@
               :visto="esEpisodioVisto(episodio._id || episodio.id)"
               @eliminar="eliminarEpisodio"
               @actualizar-visto="toggleEpisodioVisto"
+              :isAdmin="isAdmin"
             />
           </div>
 
-          <div class="add-episodio-container">
+          <div class="add-episodio-container" v-if="isAdmin">
             <router-link
               :to="`/temporadas/${temporada._id}/episodios/nuevo`"
               class="add-episodio-btn"
@@ -92,7 +93,7 @@
         </div>
       </div>
 
-      <div class="crear-temporada-container">
+      <div class="crear-temporada-container" v-if="isAdmin">
         <router-link
           :to="`/series/${serie._id}/temporadas/nueva`"
           class="crear-temporada-btn"
@@ -127,6 +128,7 @@ const episodiosVistos = reactive({});
 
 const isAuthenticated = computed(() => globalAuth && globalAuth.isAuthenticated);
 const authUser = computed(() => globalAuth && globalAuth.user);
+const isAdmin = computed(() => globalAuth.isAdmin());
 
 const temporadasOrdenadas = computed(() => {
   return [...(temporadas.value || [])].sort(
@@ -281,7 +283,10 @@ const eliminarSerie = async () => {
 
   try {
     const response = await axios.delete(
-      `http://localhost:5000/api/series/${serie.value._id}`
+      `http://localhost:5000/api/series/${serie.value._id}`,
+      {
+        headers: globalAuth.getAuthHeaders()
+      }
     );
 
     if (response.status === 200 || response.status === 204) {
@@ -308,7 +313,9 @@ const eliminarTemporada = async (temporadaId) => {
   }
 
   try {
-    await axios.delete(`http://localhost:5000/api/temporadas/${temporadaId}`);
+    await axios.delete(`http://localhost:5000/api/temporadas/${temporadaId}`, {
+      headers: globalAuth.getAuthHeaders()
+    });
     await cargarDatos();
   } catch (error) {
     console.error("Error al eliminar la temporada:", error);
@@ -322,7 +329,9 @@ const eliminarEpisodio = async (episodioId) => {
   }
 
   try {
-    await axios.delete(`http://localhost:5000/api/episodios/${episodioId}`);
+    await axios.delete(`http://localhost:5000/api/episodios/${episodioId}`, {
+      headers: globalAuth.getAuthHeaders()
+    });
     await cargarDatos();
   } catch (error) {
     console.error("Error al eliminar el episodio:", error);
@@ -335,7 +344,7 @@ const eliminarEpisodio = async (episodioId) => {
 .detalles-view {
   padding: 2rem;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 6rem auto 2rem auto; /* Margen superior aumentado para la navbar */
   min-height: 80vh;
 }
 
@@ -465,73 +474,18 @@ const eliminarEpisodio = async (episodioId) => {
   padding: 1.5rem;
 }
 
-@media (max-width: 768px) {
-  .detalles-view {
-    padding: 1.5rem;
-  }
-
-  .serie-header h1 {
-    font-size: 2rem;
-  }
-
-  .temporada-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding: 1rem;
-  }
-
-  .episodios-list-vertical {
-    padding: 1rem;
-    gap: 1.25rem;
-  }
-  .crear-temporada-container {
-    margin-top: 2rem;
-    text-align: center;
-  }
-  .crear-temporada-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: flex;
-    justify-content: center;
-  }
-  .crear-temporada-btn {
-    background: linear-gradient(135deg, #8c00d7 0%, #6a00b8 100%);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    box-shadow: 0 4px 6px rgba(140, 0, 215, 0.2);
-  }
-
-  .crear-temporada-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(140, 0, 215, 0.3);
-    background: linear-gradient(135deg, #7a00c2 0%, #5a00a0 100%);
-  }
-
-  .crear-temporada-btn:active {
-    transform: translateY(0);
-  }
-
-  .icono {
-    font-size: 1.2rem;
-    font-weight: bold;
-  }
-}
 .action-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
   margin-bottom: 2rem;
+  position: sticky;
+  top: 5rem; /* Ajuste para la navbar */
+  z-index: 10;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .delete-btn,
@@ -623,6 +577,11 @@ const eliminarEpisodio = async (episodioId) => {
   background-color: #e9d5ff;
 }
 
+.crear-temporada-container {
+  margin-top: 2rem;
+  text-align: center;
+}
+
 .crear-temporada-btn {
   display: inline-flex;
   align-items: center;
@@ -645,5 +604,33 @@ const eliminarEpisodio = async (episodioId) => {
 .icono {
   font-weight: bold;
   font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .detalles-view {
+    padding: 1.5rem;
+    margin-top: 5rem; /* Menos margen en móvil */
+  }
+
+  .serie-header h1 {
+    font-size: 2rem;
+  }
+
+  .temporada-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+
+  .episodios-list-vertical {
+    padding: 1rem;
+    gap: 1.25rem;
+  }
+
+  .action-buttons {
+    top: 4rem;
+    padding: 0.5rem;
+  }
 }
 </style>
