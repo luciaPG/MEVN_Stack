@@ -67,32 +67,6 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="confirmPassword">Confirmar Contraseña</label>
-          <div class="input-with-icon">
-            <i class="fas fa-lock"></i>
-            <input
-              id="confirmPassword"
-              :type="showConfirmPassword ? 'text' : 'password'"
-              v-model="confirmPassword"
-              required
-              autocomplete="new-password"
-              placeholder="Confirma tu contraseña"
-            />
-            <button
-              type="button"
-              class="toggle-password"
-              @click="showConfirmPassword = !showConfirmPassword"
-            >
-              <i
-                :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"
-              ></i>
-            </button>
-          </div>
-          <div v-if="validationErrors.confirmPassword" class="validation-error">
-            {{ validationErrors.confirmPassword }}
-          </div>
-        </div>
-        <div class="form-group">
           <button type="submit" class="register-btn" :disabled="isLoading">
             <span v-if="isLoading" class="spinner"></span>
             <span v-else>Crear Cuenta</span>
@@ -121,18 +95,15 @@ import axios from "axios";
 const username = ref("");
 const email = ref("");
 const password = ref("");
-const confirmPassword = ref("");
 const error = ref("");
 const router = useRouter();
 const showPassword = ref(false);
-const showConfirmPassword = ref(false);
 const isLoading = ref(false);
 
 const validationErrors = reactive({
   username: "",
   email: "",
   password: "",
-  confirmPassword: "",
 });
 
 const validateForm = () => {
@@ -140,7 +111,6 @@ const validateForm = () => {
   validationErrors.username = "";
   validationErrors.email = "";
   validationErrors.password = "";
-  validationErrors.confirmPassword = "";
 
   if (username.value.length < 3) {
     validationErrors.username =
@@ -151,11 +121,6 @@ const validateForm = () => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email.value)) {
     validationErrors.email = "Por favor, ingresa un email válido";
-    isValid = false;
-  }
-
-  if (password.value !== confirmPassword.value) {
-    validationErrors.confirmPassword = "Las contraseñas no coinciden";
     isValid = false;
   }
 
@@ -182,7 +147,7 @@ const handleRegister = async () => {
 
     localStorage.setItem("jwt", response.data.token);
 
-    router.push("/dashboard");
+    router.push("/login");
   } catch (err) {
     error.value = err.response?.data?.message || "Error al crear la cuenta";
   } finally {

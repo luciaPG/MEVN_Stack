@@ -5,19 +5,12 @@ const { promisify } = require('util');
 
 exports.register = async (req, res, next) => {
   try {
-    const { username, email, password, passwordConfirm } = req.body;
+    const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({
         status: 'fail',
         message: 'Por favor proporcione nombre de usuario, email y contraseña',
-      });
-    }
-
-    if (password !== passwordConfirm) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Las contraseñas no coinciden',
       });
     }
 

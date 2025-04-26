@@ -55,7 +55,7 @@
       <p v-else>No tienes series completadas</p>
 
       <div v-if="activeTab === 'todas'" class="explore-container">
-        <router-link to="/explorar" class="explore-btn">
+        <router-link to="/" class="explore-btn">
           Explorar catálogo de series
         </router-link>
       </div>
