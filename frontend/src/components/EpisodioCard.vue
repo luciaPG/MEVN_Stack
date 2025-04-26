@@ -26,6 +26,7 @@
         </button>
 
         <button
+          v-if="isAdmin"
           @click.stop="eliminarEpisodio"
           class="delete-btn"
           title="Eliminar episodio"
@@ -35,6 +36,7 @@
         </button>
 
         <router-link
+          v-if="isAdmin"
           :to="`/episodios/${id}/editar`"
           class="edit-btn"
           title="Editar episodio"
@@ -67,6 +69,10 @@ const props = defineProps({
   },
   fechaEstreno: String,
   visto: {
+    type: Boolean,
+    default: false
+  },
+  isAdmin: {
     type: Boolean,
     default: false
   }
