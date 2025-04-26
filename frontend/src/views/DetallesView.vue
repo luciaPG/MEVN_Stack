@@ -479,7 +479,6 @@ const eliminarEpisodio = async (episodioId) => {
   justify-content: flex-end;
   gap: 1rem;
   margin-bottom: 2rem;
-  position: sticky;
   top: 5rem; /* Ajuste para la navbar */
   z-index: 10;
   background: white;
