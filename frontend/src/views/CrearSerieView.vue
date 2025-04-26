@@ -2,6 +2,9 @@
   <div class="crear-serie-view">
     <div class="header">
       <h1>Crear Nueva Serie</h1>
+      <router-link to="/series" class="back-link">
+        &larr; Volver al listado
+      </router-link>
     </div>
 
     <form @submit.prevent="handleSubmit" class="serie-form">
@@ -14,10 +17,11 @@
         <input
           type="text"
           id="nombre"
-          v-model="serie.nombre"
+          v-model.trim="serie.nombre"
           required
           placeholder="Ej: Breaking Bad"
           class="form-input"
+          maxlength="100"
         />
       </div>
 
@@ -26,10 +30,11 @@
         <input
           type="text"
           id="genero"
-          v-model="serie.genero"
+          v-model.trim="serie.genero"
           required
           placeholder="Ej: Drama, Crimen"
           class="form-input"
+          maxlength="50"
         />
       </div>
 
@@ -37,11 +42,12 @@
         <label for="sinopsis">Sinopsis*</label>
         <textarea
           id="sinopsis"
-          v-model="serie.sinopsis"
+          v-model.trim="serie.sinopsis"
           required
           rows="5"
           class="form-textarea"
           placeholder="Descripción detallada de la serie..."
+          maxlength="2000"
         ></textarea>
       </div>
 
@@ -49,7 +55,11 @@
         <button type="button" @click="resetForm" class="cancel-btn">
           Limpiar
         </button>
-        <button type="submit" class="submit-btn" :disabled="isSubmitting">
+        <button 
+          type="submit" 
+          class="submit-btn" 
+          :disabled="isSubmitting || !isFormValid"
+        >
           <span v-if="!isSubmitting">Crear Serie</span>
           <span v-else class="loading-spinner"></span>
         </button>
@@ -59,13 +69,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
-import { useAuth } from "../store/AuthContext";
+import { globalAuth } from "../store/AuthContext";
 
 const router = useRouter();
-const { authState } = useAuth();
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 const currentUserId = ref(null);
@@ -74,24 +83,40 @@ const serie = ref({
   nombre: "",
   genero: "",
   sinopsis: "",
-  usuario: null,
 });
 
-onMounted(() => {
-  // Get current user ID from auth state
-  if (authState.user && authState.user._id) {
-    currentUserId.value = authState.user._id;
-    serie.value.usuario = currentUserId.value;
-  } else if (localStorage.getItem("jwt")) {
-    // If we have a token but no user data, attempt to get user data
-    fetchUserData();
+// Validación del formulario
+const isFormValid = computed(() => {
+  return (
+    serie.value.nombre.trim() &&
+    serie.value.genero.trim() &&
+    serie.value.sinopsis.trim()
+  );
+});
+
+onMounted(async () => {
+  // Verificar autenticación al cargar el componente
+  const token = localStorage.getItem("jwt");
+  if (!token) {
+    router.push("/login");
+    return;
+  }
+
+  // Obtener ID de usuario
+  if (globalAuth?.user?._id) {
+    currentUserId.value = globalAuth.user._id;
+  } else {
+    await fetchUserData();
   }
 });
 
 const fetchUserData = async () => {
   try {
     const token = localStorage.getItem("jwt");
-    if (!token) return;
+    if (!token) {
+      router.push("/login");
+      return;
+    }
 
     const response = await axios.get("http://localhost:5000/api/auth/me", {
       headers: {
@@ -99,54 +124,70 @@ const fetchUserData = async () => {
       },
     });
 
-    if (response.data && response.data._id) {
+    if (response.data?._id) {
       currentUserId.value = response.data._id;
-      serie.value.usuario = currentUserId.value;
+      // Actualizar el store de autenticación
+      if (globalAuth && typeof globalAuth.setUser === "function") {
+        globalAuth.setUser(response.data);
+      }
+    } else {
+      throw new Error("Usuario no encontrado en la respuesta");
     }
   } catch (error) {
-    console.error("Error fetching user data:", error);
+    console.error("Error obteniendo datos del usuario:", error);
+    errorMessage.value = "Debes iniciar sesión para crear una serie";
+    router.push("/login");
   }
 };
 
 const handleSubmit = async () => {
-  try {
-    isSubmitting.value = true;
-    errorMessage.value = "";
+  if (!isFormValid.value) {
+    errorMessage.value = "Todos los campos marcados con * son obligatorios";
+    return;
+  }
 
-    if (
-      !serie.value.nombre.trim() ||
-      !serie.value.genero.trim() ||
-      !serie.value.sinopsis.trim()
-    ) {
-      errorMessage.value = "Todos los campos marcados con * son obligatorios";
-      return;
+  if (!currentUserId.value) {
+    errorMessage.value = "Debes iniciar sesión para crear una serie";
+    router.push("/login");
+    return;
+  }
+
+  isSubmitting.value = true;
+  errorMessage.value = "";
+
+  try {
+    const token = localStorage.getItem("jwt");
+    if (!token) {
+      throw new Error("No hay token de autenticación");
     }
 
     const payload = {
       nombre: serie.value.nombre.trim(),
       genero: serie.value.genero.trim(),
       sinopsis: serie.value.sinopsis.trim(),
+      usuario: currentUserId.value,
     };
-
-    // Add user ID if available
-    if (currentUserId.value) {
-      payload.usuario = currentUserId.value;
-    }
 
     const response = await axios.post(
       "http://localhost:5000/api/series",
-      payload
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
 
     router.push(`/detalles/${response.data._id}`);
   } catch (error) {
     console.error("Error al crear la serie:", error);
-
-    if (error.response && error.response.data) {
-      errorMessage.value =
-        error.response.data.message || "Ocurrió un error al crear la serie";
+    
+    if (error.response?.status === 401) {
+      errorMessage.value = "Tu sesión ha expirado. Por favor inicia sesión nuevamente.";
+      router.push("/login");
     } else {
       errorMessage.value =
+        error.response?.data?.message ||
         "Ocurrió un error al crear la serie. Por favor intenta nuevamente.";
     }
   } finally {
@@ -159,7 +200,6 @@ const resetForm = () => {
     nombre: "",
     genero: "",
     sinopsis: "",
-    usuario: currentUserId.value,
   };
   errorMessage.value = "";
 };
@@ -293,6 +333,7 @@ const resetForm = () => {
 .submit-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  background: #ccc;
 }
 
 .loading-spinner {
