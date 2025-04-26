@@ -3,31 +3,27 @@
     <h1>Tus Series Vistas</h1>
 
     <div class="actions-container">
-      <div class="create-btn-container" v-if="isAdmin">
-        <router-link to="/series/nueva" class="create-btn">
-          <span class="icon">+</span> Crear Nueva Serie
-        </router-link>
-      </div>
-      
-      <div class="tabs">
-        <button 
-          :class="['tab-btn', { active: activeTab === 'todas' }]" 
-          @click="activeTab = 'todas'"
-        >
-          Todas
-        </button>
-        <button 
-          :class="['tab-btn', { active: activeTab === 'progreso' }]" 
-          @click="activeTab = 'progreso'"
-        >
-          En Progreso
-        </button>
-        <button 
-          :class="['tab-btn', { active: activeTab === 'completadas' }]" 
-          @click="activeTab = 'completadas'"
-        >
-          Completadas
-        </button>
+      <div class="tabs-container">
+        <div class="tabs">
+          <button 
+            :class="['tab-btn', { active: activeTab === 'todas' }]" 
+            @click="activeTab = 'todas'"
+          >
+            Todas
+          </button>
+          <button 
+            :class="['tab-btn', { active: activeTab === 'progreso' }]" 
+            @click="activeTab = 'progreso'"
+          >
+            En Progreso
+          </button>
+          <button 
+            :class="['tab-btn', { active: activeTab === 'completadas' }]" 
+            @click="activeTab = 'completadas'"
+          >
+            Completadas
+          </button>
+        </div>
       </div>
     </div>
 
@@ -167,46 +163,31 @@ h1 {
 
 .actions-container {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.create-btn-container {
-  margin: 0;
-}
-
-.create-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #8c00d7 0%, #6a00b8 100%);
-  color: white;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.create-btn:hover {
-  background: linear-gradient(135deg, #7a00c2 0%, #5a00a0 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(140, 0, 215, 0.2);
+.tabs-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .tabs {
   display: flex;
   gap: 0.5rem;
+  background: #f3f4f6;
+  padding: 0.5rem;
+  border-radius: 8px;
 }
 
 .tab-btn {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 6px;
-  background-color: #f3f4f6;
+  background-color: transparent;
   color: #4b5563;
   font-weight: 500;
   cursor: pointer;
@@ -266,17 +247,14 @@ h1 {
   box-shadow: 0 4px 8px rgba(0, 140, 215, 0.2);
 }
 
-.icon {
-  font-weight: bold;
-}
-
 @media (max-width: 768px) {
   .actions-container {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
   }
   
   .tabs {
+    width: 100%;
     justify-content: center;
   }
 }

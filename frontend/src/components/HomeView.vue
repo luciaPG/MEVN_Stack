@@ -79,7 +79,6 @@ const registerSerie = async (serieId) => {
       { headers: globalAuth.getAuthHeaders() }
     );
     
-    // Actualizar la lista después de registrar
     await fetchSeries();
   } catch (error) {
     console.error('Error al registrar serie:', error);
@@ -107,7 +106,6 @@ const unregisterSerie = async (serieId) => {
       }
     );
     
-    // Actualizar la lista después de desregistrar
     await fetchSeries();
   } catch (error) {
     console.error('Error al desregistrar serie:', error);
@@ -128,21 +126,23 @@ onMounted(() => {
 
 .header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 h1 {
   font-size: 2rem;
   color: #333;
   margin: 4rem 0 1rem 0;
+  text-align: center;
 }
 
 .create-btn-container {
-  margin: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .create-btn {
@@ -194,7 +194,7 @@ h1 {
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     text-align: center;
   }
   
