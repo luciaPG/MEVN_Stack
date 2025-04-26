@@ -1,19 +1,23 @@
 <template>
-  <!-- Añadir una verificación para asegurar que series existe antes de acceder a su longitud -->
-  <div class="series-container">
-    <h1 class="page-title">Explora todas las series</h1>
+  <div class="explorar-view">
+    <div class="header">
+      <h1>Explora todas las series</h1>
+      
+      <div class="create-btn-container" v-if="isAdmin">
+        <router-link to="/series/nueva" class="create-btn">
+          <span class="icon">+</span> Crear Nueva Serie
+        </router-link>
+      </div>
+    </div>
     
-    <!-- Mostrar mensaje de carga mientras se obtienen los datos -->
     <div v-if="loading" class="loading-indicator">
       <p>Cargando series...</p>
     </div>
     
-    <!-- Mostrar este mensaje si no hay series o si hubo un error -->
     <div v-else-if="!series || series.length === 0" class="no-series">
       <p>⚠️ No se encontraron series públicas para registrar</p>
     </div>
     
-    <!-- Mostrar las series solo cuando el array existe y tiene elementos -->
     <div v-else class="series-grid">
       <SerieCardPublic
         v-for="serie in series"
@@ -30,17 +34,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import SerieCardPublic from '../components/SerieCardPublic.vue';
 import { globalAuth } from '../store/AuthContext';
 
-// Definir variables reactivas
-const series = ref([]); // Inicializar como array vacío
+const series = ref([]);
 const loading = ref(true);
 const error = ref(null);
+const isAdmin = computed(() => globalAuth.isAdmin());
 
-// Función para obtener las series
 const fetchSeries = async () => {
   loading.value = true;
   error.value = null;
@@ -51,13 +54,12 @@ const fetchSeries = async () => {
   } catch (err) {
     console.error('Error al obtener series:', err);
     error.value = 'Error al cargar las series. Por favor, intente nuevamente.';
-    series.value = []; // Asegurar que series es un array vacío en caso de error
+    series.value = [];
   } finally {
     loading.value = false;
   }
 };
 
-// Función para registrar una serie
 const registerSerie = async (serieId) => {
   if (!globalAuth.isAuthenticated()) {
     console.error('Usuario no autenticado');
@@ -77,13 +79,12 @@ const registerSerie = async (serieId) => {
       { headers: globalAuth.getAuthHeaders() }
     );
     
-    console.log(`Serie ${serieId} registrada para el usuario ${userId}`);
+    await fetchSeries();
   } catch (error) {
     console.error('Error al registrar serie:', error);
   }
 };
 
-// Función para eliminar registro de una serie
 const unregisterSerie = async (serieId) => {
   if (!globalAuth.isAuthenticated()) {
     console.error('Usuario no autenticado');
@@ -105,31 +106,62 @@ const unregisterSerie = async (serieId) => {
       }
     );
     
-    console.log(`Serie ${serieId} desregistrada para el usuario ${userId}`);
+    await fetchSeries();
   } catch (error) {
     console.error('Error al desregistrar serie:', error);
   }
 };
 
-// Cargar series cuando el componente se monta
 onMounted(() => {
   fetchSeries();
 });
 </script>
 
 <style scoped>
-.series-container {
+.explorar-view {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
 }
 
-.page-title {
-  font-size: 2rem;
-  margin-top: 5rem;
-  color: #333;
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-bottom: 2rem;
+  gap: 1.5rem;
+}
+
+h1 {
+  font-size: 2rem;
+  color: #333;
+  margin: 4rem 0 1rem 0;
   text-align: center;
+}
+
+.create-btn-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #8c00d7 0%, #6a00b8 100%);
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.create-btn:hover {
+  background: linear-gradient(135deg, #7a00c2 0%, #5a00a0 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(140, 0, 215, 0.2);
 }
 
 .series-grid {
@@ -153,5 +185,22 @@ onMounted(() => {
   background-color: #f9f9f9;
   border-radius: 8px;
   margin-top: 1rem;
+}
+
+.icon {
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  h1 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
 }
 </style>

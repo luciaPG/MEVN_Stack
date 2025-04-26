@@ -2,19 +2,47 @@
   <div class="series-view">
     <h1>Tus Series Vistas</h1>
 
-    <div class="create-btn-container" v-if="isAdmin">
-      <router-link to="/series/nueva" class="create-btn">
-        <span class="icon">+</span> Crear Nueva Serie
-      </router-link>
+    <div class="actions-container">
+      <div class="tabs-container">
+        <div class="tabs">
+          <button 
+            :class="['tab-btn', { active: activeTab === 'todas' }]" 
+            @click="activeTab = 'todas'"
+          >
+            Todas
+          </button>
+          <button 
+            :class="['tab-btn', { active: activeTab === 'progreso' }]" 
+            @click="activeTab = 'progreso'"
+          >
+            En Progreso
+          </button>
+          <button 
+            :class="['tab-btn', { active: activeTab === 'completadas' }]" 
+            @click="activeTab = 'completadas'"
+          >
+            Completadas
+          </button>
+        </div>
+      </div>
     </div>
 
     <div v-if="loading" class="loading">Cargando series...</div>
 
     <div v-else-if="filteredSeries.length > 0" class="series-grid">
-      <SerieCard v-for="serie in filteredSeries" :key="serie._id" :id="serie._id" :nombre="serie.nombre"
-        :sinopsis="serie.sinopsis" :genero="serie.genero" :progreso="serie.progreso"
-        :episodiosVistos="serie.episodiosVistos" :totalEpisodios="serie.totalEpisodios"
-        @eliminar="handleEliminarSerie" @serie-eliminada="handleSerieEliminada" />
+      <SerieCard 
+        v-for="serie in filteredSeries" 
+        :key="serie._id" 
+        :id="serie._id" 
+        :nombre="serie.nombre"
+        :sinopsis="serie.sinopsis" 
+        :genero="serie.genero" 
+        :progreso="serie.progreso"
+        :episodiosVistos="serie.episodiosVistos" 
+        :totalEpisodios="serie.totalEpisodios"
+        @eliminar="handleEliminarSerie" 
+        @serie-eliminada="handleSerieEliminada" 
+      />
     </div>
 
     <div v-else class="no-series">
@@ -23,7 +51,7 @@
       <p v-else>No tienes series completadas</p>
 
       <div v-if="activeTab === 'todas'" class="explore-container">
-        <router-link to="/explorar" class="explore-btn">
+        <router-link to="/" class="explore-btn">
           Explorar catálogo de series
         </router-link>
       </div>
@@ -94,7 +122,6 @@ onMounted(loadSeries);
 
 const handleEliminarSerie = async (serieId) => {
   try {
-    // Solo los administradores pueden eliminar series
     if (!isAdmin.value) {
       alert("No tienes permisos para eliminar series");
       return;
@@ -112,7 +139,6 @@ const handleEliminarSerie = async (serieId) => {
 
 const handleSerieEliminada = async () => {
   try {
-    // Recargar las series
     await loadSeries();
   } catch (error) {
     console.error("Error al recargar las series:", error);
@@ -122,11 +148,8 @@ const handleSerieEliminada = async () => {
 
 <style scoped>
 .series-view {
-  margin-top: 15rem;
   padding: 2rem;
-  text-align: center;
   max-width: 1200px;
- 
   margin: 0 auto;
 }
 
@@ -135,44 +158,54 @@ h1 {
   margin-top: 4rem;
   color: #333;
   margin-bottom: 2rem;
+  text-align: center;
+}
+
+.actions-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1.5rem;
+}
+
+.tabs-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .tabs {
   display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
   gap: 0.5rem;
-}
-
-
-.create-btn-container {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.create-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #8c00d7 0%, #6a00b8 100%);
-  color: white;
+  background: #f3f4f6;
+  padding: 0.5rem;
   border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s;
 }
 
-.create-btn:hover {
-  background: linear-gradient(135deg, #7a00c2 0%, #5a00a0 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(140, 0, 215, 0.2);
+.tab-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.tab-btn.active {
+  background-color: #8c00d7;
+  color: white;
 }
 
 .series-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
 }
 
@@ -214,7 +247,15 @@ h1 {
   box-shadow: 0 4px 8px rgba(0, 140, 215, 0.2);
 }
 
-.icon {
-  font-weight: bold;
+@media (max-width: 768px) {
+  .actions-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .tabs {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>

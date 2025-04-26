@@ -1,5 +1,6 @@
 const Episodio = require('../models/Episodio');
 const Temporada = require('../models/Temporada');
+const Progreso = require('../models/Progreso');
 
 // CREATE
 const createEpisodio = async (req, res) => {
@@ -66,6 +67,7 @@ const updateEpisodio = async (req, res) => {
 // DELETE
 const deleteEpisodio = async (req, res) => {
     try {
+        await Progreso.deleteMany({ episodio: req.params.id });
         const deletedEpisodio = await Episodio.findByIdAndDelete(req.params.id);
         if (!deletedEpisodio) {
             return res.status(404).json({ message: "Episodio no encontrado" });

@@ -1,5 +1,5 @@
 <template>
-  <div class="episodio-card">
+  <div class="episodio-card" :class="{ 'episodio-visto': episodioVisto }">
     <div class="episodio-content">
       <div class="episodio-info">
         <span class="episodio-numero">Episodio {{ numeroEpisodio }}</span>
@@ -16,26 +16,31 @@
 
       <div class="episodio-actions">
         <button
-          @click="toggleVisto"
+          @click.stop="toggleVisto"
           class="visto-btn"
           :class="{ visto: episodioVisto }"
           :title="episodioVisto ? 'Marcar como no visto' : 'Marcar como visto'"
+          :aria-label="episodioVisto ? 'Episodio visto' : 'Episodio no visto'"
         >
           <span v-if="episodioVisto">✓</span>
         </button>
 
         <button
-          @click="eliminarEpisodio"
+          v-if="isAdmin"
+          @click.stop="eliminarEpisodio"
           class="delete-btn"
           title="Eliminar episodio"
+          aria-label="Eliminar episodio"
         >
           🗑️
         </button>
 
         <router-link
+          v-if="isAdmin"
           :to="`/episodios/${id}/editar`"
           class="edit-btn"
           title="Editar episodio"
+          aria-label="Editar episodio"
         >
           ✏️
         </router-link>
@@ -45,43 +50,66 @@
 </template>
 
 <script setup>
-import { defineProps, computed, ref } from "vue";
-import defineEmits from "vue";
+import { defineProps, defineEmits, computed, watch } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps({
-  id: String,
-  nombre: String,
+  id: {
+    type: String,
+    required: true
+  },
+  nombre: {
+    type: String,
+    required: true
+  },
   sinopsis: String,
-  numeroEpisodio: Number,
+  numeroEpisodio: {
+    type: Number,
+    required: true
+  },
   fechaEstreno: String,
   visto: {
     type: Boolean,
-    default: false,
+    default: false
   },
+  isAdmin: {
+    type: Boolean,
+    default: false
+  }
 });
 
-const emit = defineEmits(["eliminar", "actualizar-visto"]);
+const emit = defineEmits(['eliminar', 'actualizar-visto']);
 
+// Usamos una ref para manejar el estado local
 const episodioVisto = ref(props.visto);
 
+// Sincronizamos con los cambios de props
+watch(() => props.visto, (newVal) => {
+  episodioVisto.value = newVal;
+});
+
 const fechaFormateada = computed(() => {
-  return props.fechaEstreno
-    ? new Date(props.fechaEstreno).toLocaleDateString("es-ES", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : "Fecha no disponible";
+  if (!props.fechaEstreno) return null;
+  
+  try {
+    return new Date(props.fechaEstreno).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch {
+    return 'Fecha inválida';
+  }
 });
 
 const toggleVisto = () => {
-  episodioVisto.value = !episodioVisto.value;
-  emit("actualizar-visto", { id: props.id, visto: episodioVisto.value });
+  // Emitimos solo el ID, el padre manejará la lógica
+  emit('actualizar-visto', props.id);
 };
 
 const eliminarEpisodio = () => {
-  {
-    emit("eliminar", props.id);
+  if (confirm('¿Estás seguro de que quieres eliminar este episodio?')) {
+    emit('eliminar', props.id);
   }
 };
 </script>
@@ -94,6 +122,11 @@ const eliminarEpisodio = () => {
   padding: 1.25rem;
   transition: all 0.2s;
   border-left: 3px solid transparent;
+}
+
+.episodio-card.episodio-visto {
+  border-left-color: #16a34a;
+  background-color: #f8fafc;
 }
 
 .episodio-card:hover {
@@ -124,6 +157,10 @@ const eliminarEpisodio = () => {
   color: #1f2937;
   font-size: 1.15rem;
   line-height: 1.4;
+}
+
+.episodio-visto .episodio-titulo {
+  color: #166534;
 }
 
 .episodio-fecha {

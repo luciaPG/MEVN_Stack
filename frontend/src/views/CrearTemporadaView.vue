@@ -125,6 +125,7 @@ const resetForm = () => {
   max-width: 600px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
+  padding-top: 80px;
 }
 
 .header {
@@ -274,6 +275,7 @@ const resetForm = () => {
 @media (max-width: 768px) {
   .crear-temporada-view {
     padding: 1.5rem 1rem;
+    padding-top: 80px;
   }
 
   .temporada-form {
